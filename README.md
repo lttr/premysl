@@ -85,12 +85,27 @@ Start the dev server on `http://localhost:3000`:
 pnpm dev
 ```
 
+## Verify
+
+The repo uses [Vite+](https://viteplus.dev) (`vp`) as the unified
+lint/format/task-runner. Run the full gate before pushing:
+
+```bash
+pnpm verify
+```
+
+It chains, each step independently: `vp check` (format + oxc lint) →
+`eslint .` (Vue/Nuxt-aware rules) → `nuxt typecheck` →
+`fallow dead-code` → `nuxt build`. A `vp staged` pre-commit hook
+auto-formats and `--fix`es staged files.
+
 ## Production
 
-Build:
+Build, then run the Node server output:
 
 ```bash
 pnpm build
+pnpm start   # node .output/server/index.mjs
 ```
 
 Preview the production build locally:
@@ -99,4 +114,12 @@ Preview the production build locally:
 pnpm preview
 ```
 
-See the [deployment docs](https://nuxt.com/docs/getting-started/deployment) for more.
+### Deployment
+
+Deploys to [Coolify](https://coolify.io) via Nixpacks (`nixpacks.toml`,
+Node 24, port 3000). Pushes to `main` auto-deploy through the configured
+GitHub App. The app needs runtime secrets to boot: `NUXT_SESSION_PASSWORD`,
+the libsql database URL/token, GitHub OAuth credentials, and AI provider keys.
+
+See the [Nuxt deployment docs](https://nuxt.com/docs/getting-started/deployment)
+for other targets.
