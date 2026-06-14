@@ -20,6 +20,8 @@ export default defineConfig({
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
     rules: { "vite-plus/prefer-vite-plus-imports": "error" },
-    options: { typeAware: true, typeCheck: true },
+    // Type-aware lint + Vue SFC resolution are owned by nuxi typecheck (vue-tsc)
+    // and @nuxt/eslint; oxlint's tsgolint false-fails on .vue imports here.
+    options: { typeAware: false, typeCheck: false },
   },
 })
