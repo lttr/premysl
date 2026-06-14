@@ -27,7 +27,8 @@ export function getSources(part: ToolPart): Source[] {
 
   // Anthropic: array of { url, title }
   if (Array.isArray(output)) {
-    return output.filter((s: Source) => s.url).map((s: Source) => ({ url: s.url, title: s.title }))
+    const sources = output as Source[]
+    return sources.filter((s) => s.url).map((s) => ({ url: s.url, title: s.title }))
   }
 
   const typed = output as SearchOutput

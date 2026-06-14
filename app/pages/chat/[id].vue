@@ -57,7 +57,8 @@ const chat = new Chat({
     let message = error.message
     if (typeof message === "string" && message[0] === "{") {
       try {
-        message = JSON.parse(message).message || message
+        const parsed = JSON.parse(message) as { message?: string }
+        message = parsed.message || message
       } catch {
         // keep original message on malformed JSON
       }
