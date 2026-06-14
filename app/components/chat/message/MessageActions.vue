@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { UIMessage } from 'ai'
-import { isFileUIPart } from 'ai'
-import { useClipboard } from '@vueuse/core'
-import { getTextFromMessage } from '@nuxt/ui/utils/ai'
+import type { UIMessage } from "ai"
+import { isFileUIPart } from "ai"
+import { useClipboard } from "@vueuse/core"
+import { getTextFromMessage } from "@nuxt/ui/utils/ai"
 
 const props = defineProps<{
   message: UIMessage & { createdAt?: string | Date }
@@ -17,9 +17,9 @@ const formattedDate = computed(() => {
   const date = new Date(props.message.createdAt)
 
   return {
-    time: date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }),
-    full: date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }),
-    iso: date.toISOString()
+    time: date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+    full: date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }),
+    iso: date.toISOString(),
   }
 })
 

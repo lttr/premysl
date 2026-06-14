@@ -1,4 +1,4 @@
-import { LazyModalConfirm, LazyModalRename } from '#components'
+import { LazyModalConfirm, LazyModalRename } from "#components"
 
 interface ChatListItem {
   id: string
@@ -17,29 +17,29 @@ export function useChatActions() {
   const renameModal = overlay.create(LazyModalRename)
   const deleteModal = overlay.create(LazyModalConfirm, {
     props: {
-      title: 'Delete chat',
-      description: 'Are you sure you want to delete this chat? This cannot be undone.',
-      color: 'error'
-    }
+      title: "Delete chat",
+      description: "Are you sure you want to delete this chat? This cannot be undone.",
+      color: "error",
+    },
   })
 
   async function renameChat(id: string, currentTitle?: string | null): Promise<string | null> {
-    const instance = renameModal.open({ title: currentTitle ?? '' })
+    const instance = renameModal.open({ title: currentTitle ?? "" })
     const result = await instance.result
 
     if (!result || result === currentTitle) return null
 
     try {
       await $fetch(`/api/chats/${id}/title`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: { [headerName]: csrf },
-        body: { title: result }
+        body: { title: result },
       })
 
-      const chatsCache = useNuxtData<ChatListItem[]>('chats')
+      const chatsCache = useNuxtData<ChatListItem[]>("chats")
       if (chatsCache.data.value) {
-        chatsCache.data.value = chatsCache.data.value.map(c =>
-          c.id === id ? { ...c, label: result } : c
+        chatsCache.data.value = chatsCache.data.value.map((c) =>
+          c.id === id ? { ...c, label: result } : c,
         )
       }
 
@@ -51,9 +51,9 @@ export function useChatActions() {
       return result
     } catch {
       toast.add({
-        description: 'Failed to rename chat',
-        icon: 'i-lucide-alert-circle',
-        color: 'error'
+        description: "Failed to rename chat",
+        icon: "i-lucide-alert-circle",
+        color: "error",
       })
 
       return null
@@ -68,31 +68,31 @@ export function useChatActions() {
 
     try {
       await $fetch(`/api/chats/${id}`, {
-        method: 'DELETE',
-        headers: { [headerName]: csrf }
+        method: "DELETE",
+        headers: { [headerName]: csrf },
       })
 
       toast.add({
-        title: 'Chat deleted',
-        description: 'Your chat has been deleted',
-        icon: 'i-lucide-trash'
+        title: "Chat deleted",
+        description: "Your chat has been deleted",
+        icon: "i-lucide-trash",
       })
 
-      const chatsCache = useNuxtData<ChatListItem[]>('chats')
+      const chatsCache = useNuxtData<ChatListItem[]>("chats")
       if (chatsCache.data.value) {
-        chatsCache.data.value = chatsCache.data.value.filter(c => c.id !== id)
+        chatsCache.data.value = chatsCache.data.value.filter((c) => c.id !== id)
       }
 
       if (route.params.id === id) {
-        navigateTo('/')
+        navigateTo("/")
       }
 
       return true
     } catch {
       toast.add({
-        description: 'Failed to delete chat',
-        icon: 'i-lucide-alert-circle',
-        color: 'error'
+        description: "Failed to delete chat",
+        icon: "i-lucide-alert-circle",
+        color: "error",
       })
 
       return false
@@ -101,6 +101,6 @@ export function useChatActions() {
 
   return {
     renameChat,
-    deleteChat
+    deleteChat,
   }
 }

@@ -5,13 +5,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [string | false] }>()
 
-const value = ref(props.title ?? '')
+const value = ref(props.title ?? "")
 
 const trimmed = computed(() => value.value.trim())
 
 function submit() {
   if (!trimmed.value) return
-  emit('close', trimmed.value)
+  emit("close", trimmed.value)
 }
 </script>
 
@@ -20,7 +20,7 @@ function submit() {
     title="Rename chat"
     description="Choose a new title for this chat."
     :ui="{
-      footer: 'flex-row-reverse justify-start'
+      footer: 'flex-row-reverse justify-start',
     }"
     :close="false"
   >
@@ -38,12 +38,7 @@ function submit() {
 
     <template #footer>
       <UButton label="Save" :disabled="!trimmed" @click="submit" />
-      <UButton
-        color="neutral"
-        variant="ghost"
-        label="Cancel"
-        @click="emit('close', false)"
-      />
+      <UButton color="neutral" variant="ghost" label="Cancel" @click="emit('close', false)" />
     </template>
   </UModal>
 </template>

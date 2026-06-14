@@ -1,83 +1,104 @@
-import type { UIMessage } from 'ai'
-import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, generateText, smoothStream, stepCountIs, streamText } from 'ai'
-import { db, schema } from 'hub:db'
-import { and, eq } from 'drizzle-orm'
-import { z } from 'zod'
-import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic'
-import { anthropic } from '@ai-sdk/anthropic'
-import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
+import type { UIMessage } from "ai"
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateText,
+  smoothStream,
+  stepCountIs,
+  streamText,
+} from "ai"
+import { db, schema } from "hub:db"
+import { and, eq } from "drizzle-orm"
+import { z } from "zod"
+import type { AnthropicLanguageModelOptions } from "@ai-sdk/anthropic"
+import { anthropic } from "@ai-sdk/anthropic"
+import type { GoogleLanguageModelOptions } from "@ai-sdk/google"
 // import { google } from '@ai-sdk/google'
-import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai'
-import { openai } from '@ai-sdk/openai'
+import type { OpenAILanguageModelResponsesOptions } from "@ai-sdk/openai"
+import { openai } from "@ai-sdk/openai"
 
 defineRouteMeta({
   openAPI: {
-    description: 'Chat with AI.',
-    tags: ['ai']
-  }
+    description: "Chat with AI.",
+    tags: ["ai"],
+  },
 })
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
 
-  const { id } = await getValidatedRouterParams(event, z.object({
-    id: z.string()
-  }).parse)
+  const { id } = await getValidatedRouterParams(
+    event,
+    z.object({
+      id: z.string(),
+    }).parse,
+  )
 
-  const { model, messages } = await readValidatedBody(event, z.object({
-    model: z.string().refine(value => MODELS.some(m => m.value === value), {
-      message: 'Invalid model'
-    }),
-    messages: z.array(z.custom<UIMessage>())
-  }).parse)
+  const { model, messages } = await readValidatedBody(
+    event,
+    z.object({
+      model: z.string().refine((value) => MODELS.some((m) => m.value === value), {
+        message: "Invalid model",
+      }),
+      messages: z.array(z.custom<UIMessage>()),
+    }).parse,
+  )
 
   const chat = await db.query.chats.findFirst({
-    where: () => and(
-      eq(schema.chats.id, id as string),
-      eq(schema.chats.userId, session.user?.id || session.id)
-    ),
+    where: () =>
+      and(
+        eq(schema.chats.id, id as string),
+        eq(schema.chats.userId, session.user?.id || session.id),
+      ),
     with: {
-      messages: true
-    }
+      messages: true,
+    },
   })
   if (!chat) {
-    throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
+    throw createError({ statusCode: 404, statusMessage: "Chat not found" })
   }
 
   if (!chat.title) {
     const { text: title } = await generateText({
-      model: 'openai/gpt-4.1-nano',
+      model: "openai/gpt-4.1-nano",
       system: `You are a title generator for a chat:
           - Generate a short title based on the first user's message
           - The title should be less than 30 characters long
           - The title should be a summary of the user's message
           - Do not use quotes (' or ") or colons (:) or any other punctuation
           - Do not use markdown, just plain text`,
-      prompt: JSON.stringify(messages[0])
+      prompt: JSON.stringify(messages[0]),
     })
 
-    await db.update(schema.chats).set({ title }).where(eq(schema.chats.id, id as string))
+    await db
+      .update(schema.chats)
+      .set({ title })
+      .where(eq(schema.chats.id, id as string))
   }
 
   const lastMessage = messages[messages.length - 1]
-  if (lastMessage?.role === 'user' && messages.length > 1) {
-    await db.insert(schema.messages).values({
-      id: lastMessage.id,
-      chatId: id as string,
-      role: 'user',
-      parts: lastMessage.parts
-    }).onConflictDoUpdate({ target: schema.messages.id, set: { parts: lastMessage.parts } })
+  if (lastMessage?.role === "user" && messages.length > 1) {
+    await db
+      .insert(schema.messages)
+      .values({
+        id: lastMessage.id,
+        chatId: id as string,
+        role: "user",
+        parts: lastMessage.parts,
+      })
+      .onConflictDoUpdate({ target: schema.messages.id, set: { parts: lastMessage.parts } })
   }
 
   const abortController = new AbortController()
-  event.node.req.on('close', () => abortController.abort())
+  event.node.req.on("close", () => abortController.abort())
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
       const result = streamText({
         abortSignal: abortController.signal,
         model,
-        system: `You are a knowledgeable and helpful AI assistant. ${session.user?.username ? `The user's name is ${session.user.username}.` : ''} Your goal is to provide clear, accurate, and well-structured responses.
+        system: `You are a knowledgeable and helpful AI assistant. ${session.user?.username ? `The user's name is ${session.user.username}.` : ""} Your goal is to provide clear, accurate, and well-structured responses.
 
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
@@ -103,57 +124,66 @@ export default defineEventHandler(async (event) => {
         tools: {
           chart: chartTool,
           weather: weatherTool,
-          ...(model.startsWith('anthropic/') && { web_search: anthropic.tools.webSearch_20250305() }),
-          ...(model.startsWith('openai/') && { web_search: openai.tools.webSearch() })
+          ...(model.startsWith("anthropic/") && {
+            web_search: anthropic.tools.webSearch_20250305(),
+          }),
+          ...(model.startsWith("openai/") && { web_search: openai.tools.webSearch() }),
           // TODO: enable once AI SDK supports combining provider-defined tools with custom tools
           // ...(model.startsWith('google/') && { google_search: google.tools.googleSearch({}) })
         },
         providerOptions: {
           anthropic: {
             thinking: {
-              type: 'enabled',
-              budgetTokens: 2048
-            }
+              type: "enabled",
+              budgetTokens: 2048,
+            },
           } satisfies AnthropicLanguageModelOptions,
           google: {
             thinkingConfig: {
               includeThoughts: true,
-              thinkingLevel: 'low'
-            }
+              thinkingLevel: "low",
+            },
           } satisfies GoogleLanguageModelOptions,
           openai: {
-            reasoningEffort: 'low',
-            reasoningSummary: 'detailed'
-          } satisfies OpenAILanguageModelResponsesOptions
+            reasoningEffort: "low",
+            reasoningSummary: "detailed",
+          } satisfies OpenAILanguageModelResponsesOptions,
         },
         stopWhen: stepCountIs(5),
-        experimental_transform: smoothStream()
+        experimental_transform: smoothStream(),
       })
 
       if (!chat.title) {
         writer.write({
-          type: 'data-chat-title',
-          data: { message: 'Generating title...' },
-          transient: true
+          type: "data-chat-title",
+          data: { message: "Generating title..." },
+          transient: true,
         })
       }
 
-      writer.merge(result.toUIMessageStream({
-        sendSources: true,
-        sendReasoning: true
-      }))
+      writer.merge(
+        result.toUIMessageStream({
+          sendSources: true,
+          sendReasoning: true,
+        }),
+      )
     },
     onFinish: async ({ messages }) => {
-      await db.insert(schema.messages).values(messages.map(message => ({
-        id: message.id,
-        chatId: chat.id,
-        role: message.role as 'user' | 'assistant',
-        parts: message.parts
-      }))).onConflictDoNothing()
-    }
+      await db
+        .insert(schema.messages)
+        .values(
+          messages.map((message) => ({
+            id: message.id,
+            chatId: chat.id,
+            role: message.role as "user" | "assistant",
+            parts: message.parts,
+          })),
+        )
+        .onConflictDoNothing()
+    },
   })
 
   return createUIMessageStreamResponse({
-    stream
+    stream,
   })
 })

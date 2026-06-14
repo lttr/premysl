@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const input = ref('')
+const input = ref("")
 const loading = ref(false)
 const chatId = crypto.randomUUID()
 
@@ -7,25 +7,17 @@ const { user } = useUserSession()
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
-  let timeGreeting = 'Good evening'
-  if (hour < 12) timeGreeting = 'Good morning'
-  else if (hour < 18) timeGreeting = 'Good afternoon'
+  let timeGreeting = "Good evening"
+  if (hour < 12) timeGreeting = "Good morning"
+  else if (hour < 18) timeGreeting = "Good afternoon"
 
-  const name = user.value?.name?.split(' ')[0] || user.value?.username
+  const name = user.value?.name?.split(" ")[0] || user.value?.username
 
   return name ? `${timeGreeting}, ${name}` : `${timeGreeting}`
 })
 
-const {
-  dropzoneRef,
-  dragging,
-  open,
-  files,
-  uploading,
-  uploadedFiles,
-  removeFile,
-  clearFiles
-} = useFileUploadWithStatus(chatId)
+const { dropzoneRef, dragging, open, files, uploading, uploadedFiles, removeFile, clearFiles } =
+  useFileUploadWithStatus(chatId)
 
 const { csrf, headerName } = useCsrf()
 
@@ -33,25 +25,27 @@ async function createChat(prompt: string) {
   input.value = prompt
   loading.value = true
 
-  const parts: Array<{ type: string, text?: string, mediaType?: string, url?: string }> = [{ type: 'text', text: prompt }]
+  const parts: Array<{ type: string; text?: string; mediaType?: string; url?: string }> = [
+    { type: "text", text: prompt },
+  ]
 
   if (uploadedFiles.value.length > 0) {
     parts.push(...uploadedFiles.value)
   }
 
-  const chat = await $fetch('/api/chats', {
-    method: 'POST',
+  const chat = await $fetch("/api/chats", {
+    method: "POST",
     headers: { [headerName]: csrf },
     body: {
       id: chatId,
       message: {
-        role: 'user',
-        parts
-      }
-    }
+        role: "user",
+        parts,
+      },
+    },
   })
 
-  refreshNuxtData('chats')
+  refreshNuxtData("chats")
   navigateTo(`/chat/${chat?.id}`)
 }
 
@@ -62,42 +56,38 @@ async function onSubmit() {
 
 const quickChats = [
   {
-    label: 'Summarize this for me',
-    icon: 'i-lucide-text'
+    label: "Summarize this for me",
+    icon: "i-lucide-text",
   },
   {
-    label: 'Help me draft an email',
-    icon: 'i-lucide-mail'
+    label: "Help me draft an email",
+    icon: "i-lucide-mail",
   },
   {
-    label: 'Brainstorm ideas with me',
-    icon: 'i-lucide-lightbulb'
+    label: "Brainstorm ideas with me",
+    icon: "i-lucide-lightbulb",
   },
   {
-    label: 'Explain a concept simply',
-    icon: 'i-lucide-graduation-cap'
+    label: "Explain a concept simply",
+    icon: "i-lucide-graduation-cap",
   },
   {
-    label: 'Review and improve my writing',
-    icon: 'i-lucide-pencil'
+    label: "Review and improve my writing",
+    icon: "i-lucide-pencil",
   },
   {
-    label: 'What is the weather today?',
-    icon: 'i-lucide-sun'
+    label: "What is the weather today?",
+    icon: "i-lucide-sun",
   },
   {
-    label: 'Show me a chart of some data',
-    icon: 'i-lucide-line-chart'
-  }
+    label: "Show me a chart of some data",
+    icon: "i-lucide-line-chart",
+  },
 ]
 </script>
 
 <template>
-  <UDashboardPanel
-    id="home"
-    class="min-h-0"
-    :ui="{ body: 'p-0 sm:p-0' }"
-  >
+  <UDashboardPanel id="home" class="min-h-0" :ui="{ body: 'p-0 sm:p-0' }">
     <template #header>
       <Navbar />
     </template>

@@ -9,7 +9,7 @@ defineProps<{
 <template>
   <UTooltip
     :content="{
-      side: 'top'
+      side: 'top',
     }"
     :text="!loggedIn ? 'You need to be logged in to upload files' : ''"
   >

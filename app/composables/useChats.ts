@@ -1,4 +1,4 @@
-import { isToday, isYesterday, subMonths } from 'date-fns'
+import { isToday, isYesterday, subMonths } from "date-fns"
 
 export interface UIChat {
   id: string
@@ -32,9 +32,9 @@ export function useChats(chats: Ref<UIChat[] | undefined>) {
         lastMonth.push(chat)
       } else {
         // Format: "January 2023", "February 2023", etc.
-        const monthYear = chatDate.toLocaleDateString('en-US', {
-          month: 'long',
-          year: 'numeric'
+        const monthYear = chatDate.toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
         })
 
         if (!older[monthYear]) {
@@ -62,33 +62,33 @@ export function useChats(chats: Ref<UIChat[] | undefined>) {
     // Add groups that have chats
     if (today.length) {
       formattedGroups.push({
-        id: 'today',
-        label: 'Today',
-        items: today
+        id: "today",
+        label: "Today",
+        items: today,
       })
     }
 
     if (yesterday.length) {
       formattedGroups.push({
-        id: 'yesterday',
-        label: 'Yesterday',
-        items: yesterday
+        id: "yesterday",
+        label: "Yesterday",
+        items: yesterday,
       })
     }
 
     if (lastWeek.length) {
       formattedGroups.push({
-        id: 'last-week',
-        label: 'Last week',
-        items: lastWeek
+        id: "last-week",
+        label: "Last week",
+        items: lastWeek,
       })
     }
 
     if (lastMonth.length) {
       formattedGroups.push({
-        id: 'last-month',
-        label: 'Last month',
-        items: lastMonth
+        id: "last-month",
+        label: "Last month",
+        items: lastMonth,
       })
     }
 
@@ -98,7 +98,7 @@ export function useChats(chats: Ref<UIChat[] | undefined>) {
         formattedGroups.push({
           id: monthYear,
           label: monthYear,
-          items: older[monthYear]
+          items: older[monthYear],
         })
       }
     })
@@ -107,6 +107,6 @@ export function useChats(chats: Ref<UIChat[] | undefined>) {
   })
 
   return {
-    groups
+    groups,
   }
 }

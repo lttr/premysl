@@ -1,41 +1,41 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
-    '@nuxt/eslint',
-    '@nuxt/ui',
-    '@comark/nuxt',
-    '@nuxthub/core',
-    'nuxt-auth-utils',
-    'nuxt-charts',
-    'nuxt-csurf'
+    "@nuxt/eslint",
+    "@nuxt/ui",
+    "@comark/nuxt",
+    "@nuxthub/core",
+    "nuxt-auth-utils",
+    "nuxt-charts",
+    "nuxt-csurf",
   ],
 
   devtools: {
-    enabled: true
+    enabled: true,
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ["~/assets/css/main.css"],
 
   experimental: {
-    viewTransition: true
+    viewTransition: true,
   },
 
-  compatibilityDate: '2024-07-11',
+  compatibilityDate: "2024-07-11",
 
   nitro: {
     experimental: {
-      openAPI: true
-    }
+      openAPI: true,
+    },
   },
 
   hub: {
-    db: 'sqlite',
-    blob: true
+    db: "sqlite",
+    blob: true,
   },
 
   vite: {
     optimizeDeps: {
-      include: ['striptags']
-    }
+      include: ["striptags"],
+    },
   },
 })

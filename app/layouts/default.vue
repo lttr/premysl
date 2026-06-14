@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from '@nuxt/ui'
+import type { DropdownMenuItem } from "@nuxt/ui"
 
 const { loggedIn, openInPopup } = useUserSession()
 const { renameChat, deleteChat } = useChatActions()
@@ -7,15 +7,16 @@ const { renameChat, deleteChat } = useChatActions()
 const sidebarOpen = ref(false)
 const searchOpen = ref(false)
 
-const { data: chats, refresh: refreshChats } = await useFetch('/api/chats', {
-  key: 'chats',
-  transform: data => data.map(chat => ({
-    id: chat.id,
-    label: chat.title || 'Untitled',
-    to: `/chat/${chat.id}`,
-    icon: 'i-lucide-message-circle',
-    createdAt: chat.createdAt
-  }))
+const { data: chats, refresh: refreshChats } = await useFetch("/api/chats", {
+  key: "chats",
+  transform: (data) =>
+    data.map((chat) => ({
+      id: chat.id,
+      label: chat.title || "Untitled",
+      to: `/chat/${chat.id}`,
+      icon: "i-lucide-message-circle",
+      createdAt: chat.createdAt,
+    })),
 })
 
 onNuxtReady(async () => {
@@ -34,39 +35,47 @@ watch(loggedIn, () => {
 
 const { groups } = useChats(chats)
 
-const items = computed(() => groups.value?.flatMap((group) => {
-  return [{
-    label: group.label,
-    type: 'label' as const
-  }, ...group.items.map(item => ({
-    ...item,
-    slot: 'chat' as const,
-    icon: undefined,
-    class: item.label === 'Untitled' ? 'text-muted' : ''
-  }))]
-}))
+const items = computed(() =>
+  groups.value?.flatMap((group) => {
+    return [
+      {
+        label: group.label,
+        type: "label" as const,
+      },
+      ...group.items.map((item) => ({
+        ...item,
+        slot: "chat" as const,
+        icon: undefined,
+        class: item.label === "Untitled" ? "text-muted" : "",
+      })),
+    ]
+  }),
+)
 
-function getChatActions(item: { id: string, label: string }): DropdownMenuItem[][] {
-  return [[
-    {
-      label: 'Rename',
-      icon: 'i-lucide-pencil',
-      onSelect: () => renameChat(item.id, item.label === 'Untitled' ? '' : item.label)
-    }
-  ], [
-    {
-      label: 'Delete',
-      icon: 'i-lucide-trash',
-      color: 'error' as const,
-      onSelect: () => deleteChat(item.id)
-    }
-  ]]
+function getChatActions(item: { id: string; label: string }): DropdownMenuItem[][] {
+  return [
+    [
+      {
+        label: "Rename",
+        icon: "i-lucide-pencil",
+        onSelect: () => renameChat(item.id, item.label === "Untitled" ? "" : item.label),
+      },
+    ],
+    [
+      {
+        label: "Delete",
+        icon: "i-lucide-trash",
+        color: "error" as const,
+        onSelect: () => deleteChat(item.id),
+      },
+    ],
+  ]
 }
 
 defineShortcuts({
   meta_o: () => {
-    navigateTo('/')
-  }
+    navigateTo("/")
+  },
 })
 </script>
 
@@ -92,24 +101,30 @@ defineShortcuts({
 
       <template #default="{ collapsed }">
         <UNavigationMenu
-          :items="[{
-            label: 'New chat',
-            to: '/',
-            kbds: ['meta', 'o'],
-            icon: 'i-lucide-circle-plus'
-          }, {
-            label: 'Search',
-            icon: 'i-lucide-search',
-            kbds: ['meta', 'k'],
-            onSelect: () => {
-              searchOpen = true
-            }
-          }]"
+          :items="[
+            {
+              label: 'New chat',
+              to: '/',
+              kbds: ['meta', 'o'],
+              icon: 'i-lucide-circle-plus',
+            },
+            {
+              label: 'Search',
+              icon: 'i-lucide-search',
+              kbds: ['meta', 'k'],
+              onSelect: () => {
+                searchOpen = true
+              },
+            },
+          ]"
           :collapsed="collapsed"
           orientation="vertical"
         >
           <template #item-trailing="{ item }">
-            <div v-if="item.kbds?.length" class="flex items-center gap-px opacity-0 group-hover:opacity-100 transition-opacity">
+            <div
+              v-if="item.kbds?.length"
+              class="flex items-center gap-px opacity-0 group-hover:opacity-100 transition-opacity"
+            >
               <UKbd
                 v-for="kbd in item.kbds"
                 :key="kbd"
@@ -129,12 +144,13 @@ defineShortcuts({
           orientation="vertical"
           :ui="{
             link: 'overflow-hidden pr-7.5',
-            linkTrailing: 'translate-x-full group-hover:translate-x-0 group-has-data-[state=open]:translate-x-0 transition-transform ms-0 absolute inset-e-px'
+            linkTrailing:
+              'translate-x-full group-hover:translate-x-0 group-has-data-[state=open]:translate-x-0 transition-transform ms-0 absolute inset-e-px',
           }"
         >
           <template #chat-trailing="{ item }">
             <UDropdownMenu
-              :items="getChatActions(item as { id: string, label: string })"
+              :items="getChatActions(item as { id: string; label: string })"
               :content="{ align: 'end' }"
             >
               <UButton
@@ -170,18 +186,25 @@ defineShortcuts({
     <UDashboardSearch
       v-model:open="searchOpen"
       placeholder="Search chats..."
-      :groups="[{
-        id: 'links',
-        items: [{
-          label: 'New chat',
-          to: '/',
-          icon: 'i-lucide-circle-plus',
-          kbds: ['meta', 'o']
-        }]
-      }, ...groups]"
+      :groups="[
+        {
+          id: 'links',
+          items: [
+            {
+              label: 'New chat',
+              to: '/',
+              icon: 'i-lucide-circle-plus',
+              kbds: ['meta', 'o'],
+            },
+          ],
+        },
+        ...groups,
+      ]"
     />
 
-    <div class="flex-1 flex m-4 lg:ml-0 rounded-lg ring ring-default bg-default/75 shadow min-w-0 overflow-hidden">
+    <div
+      class="flex-1 flex m-4 lg:ml-0 rounded-lg ring ring-default bg-default/75 shadow min-w-0 overflow-hidden"
+    >
       <slot />
     </div>
   </UDashboardGroup>

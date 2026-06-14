@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UIMessage } from 'ai'
+import type { UIMessage } from "ai"
 
 const props = defineProps<{
   message: UIMessage
@@ -27,13 +27,7 @@ const editingText = ref(props.text)
     />
 
     <div class="flex gap-1.5 justify-end">
-      <UButton
-        size="sm"
-        variant="soft"
-        color="neutral"
-        label="Cancel"
-        @click="emit('cancel')"
-      />
+      <UButton size="sm" variant="soft" color="neutral" label="Cancel" @click="emit('cancel')" />
       <UButton
         size="sm"
         label="Save"

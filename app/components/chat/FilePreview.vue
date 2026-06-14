@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import type { AvatarProps } from '@nuxt/ui'
-import { AnimatePresence, Motion } from 'motion-v'
+import type { AvatarProps } from "@nuxt/ui"
+import { AnimatePresence, Motion } from "motion-v"
 
 interface ChatFilePreviewProps {
   name: string
   type: string
   previewUrl?: string
-  size?: AvatarProps['size']
-  status?: 'idle' | 'uploading' | 'uploaded' | 'error'
+  size?: AvatarProps["size"]
+  status?: "idle" | "uploading" | "uploaded" | "error"
   error?: string
   removable?: boolean
 }
 
 const props = withDefaults(defineProps<ChatFilePreviewProps>(), {
-  status: 'idle',
+  status: "idle",
   removable: false,
-  size: '2xl'
+  size: "2xl",
 })
 
 const emit = defineEmits<{
@@ -24,7 +24,7 @@ const emit = defineEmits<{
 
 const open = ref(false)
 
-const isZoomable = computed(() => props.type.startsWith('image/') && props.previewUrl)
+const isZoomable = computed(() => props.type.startsWith("image/") && props.previewUrl)
 
 function openZoom() {
   if (isZoomable.value) {
@@ -37,15 +37,15 @@ function closeZoom() {
 }
 
 defineShortcuts({
-  escape: closeZoom
+  escape: closeZoom,
 })
 
 onMounted(() => {
-  window.addEventListener('scroll', closeZoom, true)
+  window.addEventListener("scroll", closeZoom, true)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', closeZoom, true)
+  window.removeEventListener("scroll", closeZoom, true)
 })
 </script>
 
@@ -59,7 +59,7 @@ onUnmounted(() => {
         class="rounded-lg"
         :class="{
           'opacity-50': status === 'uploading',
-          'cursor-zoom-in': isZoomable
+          'cursor-zoom-in': isZoomable,
         }"
         @click="openZoom"
       />
@@ -110,7 +110,7 @@ onUnmounted(() => {
               :src="previewUrl"
               :alt="removeRandomSuffix(name)"
               class="max-w-[95vw] max-h-[95vh] object-contain rounded-md"
-            >
+            />
           </Motion>
         </div>
       </AnimatePresence>

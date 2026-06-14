@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { isReasoningUIPart, isTextUIPart, isToolUIPart, getToolName } from 'ai'
-import type { UIMessage } from 'ai'
-import { isPartStreaming, isToolStreaming } from '@nuxt/ui/utils/ai'
+import { isReasoningUIPart, isTextUIPart, isToolUIPart, getToolName } from "ai"
+import type { UIMessage } from "ai"
+import { isPartStreaming, isToolStreaming } from "@nuxt/ui/utils/ai"
 
 defineProps<{
   message: UIMessage
@@ -15,17 +15,17 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <template v-for="(part, index) in getMergedParts(message.parts)" :key="`${message.id}-${part.type}-${index}`">
+  <template
+    v-for="(part, index) in getMergedParts(message.parts)"
+    :key="`${message.id}-${part.type}-${index}`"
+  >
     <UChatReasoning
       v-if="isReasoningUIPart(part)"
       :text="part.text"
       :streaming="isPartStreaming(part)"
       chevron="leading"
     >
-      <ChatComark
-        :markdown="part.text"
-        :streaming="isPartStreaming(part)"
-      />
+      <ChatComark :markdown="part.text" :streaming="isPartStreaming(part)" />
     </UChatReasoning>
 
     <template v-else-if="isToolUIPart(part)">

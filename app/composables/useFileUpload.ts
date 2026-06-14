@@ -13,8 +13,8 @@ function fileToInput(file: File): HTMLInputElement {
   const dataTransfer = new DataTransfer()
   dataTransfer.items.add(file)
 
-  const input = document.createElement('input')
-  input.type = 'file'
+  const input = document.createElement("input")
+  input.type = "file"
   input.files = dataTransfer.files
 
   return input
@@ -28,8 +28,8 @@ export function useFileUploadWithStatus(chatId: string) {
   const { csrf, headerName } = useCsrf()
 
   const upload = useUpload(`/api/upload/${chatId}`, {
-    method: 'PUT',
-    headers: { [headerName]: csrf }
+    method: "PUT",
+    headers: { [headerName]: csrf },
   })
 
   async function uploadFiles(newFiles: File[]) {
@@ -37,53 +37,54 @@ export function useFileUploadWithStatus(chatId: string) {
       return
     }
 
-    const filesWithStatus: FileWithStatus[] = newFiles.map(file => ({
+    const filesWithStatus: FileWithStatus[] = newFiles.map((file) => ({
       file,
       id: crypto.randomUUID(),
       previewUrl: createObjectUrl(file),
-      status: 'uploading' as const
+      status: "uploading" as const,
     }))
 
     files.value = [...files.value, ...filesWithStatus]
 
     const uploadPromises = filesWithStatus.map(async (fileWithStatus) => {
-      const index = files.value.findIndex(f => f.id === fileWithStatus.id)
+      const index = files.value.findIndex((f) => f.id === fileWithStatus.id)
       if (index === -1) return
 
       try {
         const input = fileToInput(fileWithStatus.file)
-        const response = await upload(input) as BlobResult | BlobResult[] | undefined
+        const response = (await upload(input)) as BlobResult | BlobResult[] | undefined
 
         if (!response) {
-          throw new Error('Upload failed')
+          throw new Error("Upload failed")
         }
 
         const result = Array.isArray(response) ? response[0] : response
 
         if (!result) {
-          throw new Error('Upload failed')
+          throw new Error("Upload failed")
         }
 
         files.value[index] = {
           ...files.value[index]!,
-          status: 'uploaded',
+          status: "uploaded",
           uploadedUrl: result.url,
-          uploadedPathname: result.pathname
+          uploadedPathname: result.pathname,
         }
       } catch (error) {
-        const errorMessage = (error as { data?: { message?: string } }).data?.message
-          || (error as Error).message
-          || 'Upload failed'
+        const errorMessage =
+          (error as { data?: { message?: string } }).data?.message ||
+          (error as Error).message ||
+          "Upload failed"
         toast.add({
-          title: 'Upload failed',
+          title: "Upload failed",
           description: errorMessage,
-          icon: 'i-lucide-alert-circle',
-          color: 'error'
+          icon: "i-lucide-alert-circle",
+          color: "error",
         })
         files.value[index] = {
           ...files.value[index]!,
-          status: 'error',
-          error: errorMessage
+          status: "error",
+          error: errorMessage,
         }
       }
     })
@@ -94,43 +95,41 @@ export function useFileUploadWithStatus(chatId: string) {
   const { dropzoneRef, isDragging, open } = useFileUpload({
     accept: FILE_UPLOAD_CONFIG.acceptPattern,
     multiple: true,
-    onUpdate: uploadFiles
+    onUpdate: uploadFiles,
   })
 
-  const uploading = computed(() =>
-    files.value.some(f => f.status === 'uploading')
-  )
+  const uploading = computed(() => files.value.some((f) => f.status === "uploading"))
 
   const uploadedFiles = computed(() =>
     files.value
-      .filter(f => f.status === 'uploaded' && f.uploadedUrl)
-      .map(f => ({
-        type: 'file' as const,
+      .filter((f) => f.status === "uploaded" && f.uploadedUrl)
+      .map((f) => ({
+        type: "file" as const,
         mediaType: f.file.type,
-        url: f.uploadedUrl!
-      }))
+        url: f.uploadedUrl!,
+      })),
   )
 
   function removeFile(id: string) {
-    const file = files.value.find(f => f.id === id)
+    const file = files.value.find((f) => f.id === id)
     if (!file) return
 
     URL.revokeObjectURL(file.previewUrl)
-    files.value = files.value.filter(f => f.id !== id)
+    files.value = files.value.filter((f) => f.id !== id)
 
-    if (file.status === 'uploaded' && file.uploadedPathname) {
+    if (file.status === "uploaded" && file.uploadedPathname) {
       $fetch(`/api/upload/${file.uploadedPathname}` as string, {
-        method: 'DELETE',
-        headers: { [headerName]: csrf }
+        method: "DELETE",
+        headers: { [headerName]: csrf },
       }).catch((error) => {
-        console.error('Failed to delete file from blob:', error)
+        console.error("Failed to delete file from blob:", error)
       })
     }
   }
 
   function clearFiles() {
     if (files.value.length === 0) return
-    files.value.forEach(fileWithStatus => URL.revokeObjectURL(fileWithStatus.previewUrl))
+    files.value.forEach((fileWithStatus) => URL.revokeObjectURL(fileWithStatus.previewUrl))
     files.value = []
   }
 
@@ -147,6 +146,6 @@ export function useFileUploadWithStatus(chatId: string) {
     uploadedFiles,
     addFiles: uploadFiles,
     removeFile,
-    clearFiles
+    clearFiles,
   }
 }
