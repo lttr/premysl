@@ -9,6 +9,7 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
+    "verify": "vp run verify:all",
     "db:generate": "nuxt db generate",
     "db:migrate": "nuxt db migrate",
     "prepare": "vp config"
