@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "db:generate": "nuxt db generate",
-    "db:migrate": "nuxt db migrate"
+    "db:migrate": "nuxt db migrate",
+    "prepare": "vp config"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.78",
@@ -47,6 +48,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.4.0",
     "typescript": "^6.0.3",
+    "vite-plus": "catalog:",
     "vue-tsc": "^3.3.0"
   },
   "packageManager": "pnpm@11.6.0"
