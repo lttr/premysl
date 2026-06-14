@@ -48,6 +48,7 @@
     "@types/node": "^24.12.4",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.4.0",
+    "fallow": "^2.96.0",
     "typescript": "^6.0.3",
     "vite-plus": "catalog:",
     "vue-tsc": "^3.3.0"

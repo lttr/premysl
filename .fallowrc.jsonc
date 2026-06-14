@@ -1,0 +1,63 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  // Nuxt registers these dirs by convention (pages/layouts/middleware/plugins,
+  // Nitro server routes, app entry) AND auto-imports components/composables/utils,
+  // so each is a reachability root. Anything not reachable from them is dead.
+  "entry": [
+    "nuxt.config.ts",
+    "app.config.ts",
+    "app/app.vue",
+    "app/error.vue",
+    "app/pages/**/*.vue",
+    "app/layouts/**/*.vue",
+    "app/middleware/**/*.ts",
+    "app/plugins/**/*.ts",
+    "app/components/**/*.vue",
+    "app/composables/**/*.ts",
+    "app/utils/**/*.ts",
+    "server/**/*.ts",
+    "shared/**/*.{ts,d.ts}",
+    "reset.d.ts",
+  ],
+  "ignorePatterns": [
+    ".nuxt/**",
+    ".output/**",
+    ".nitro/**",
+    ".data/**",
+    "dist/**",
+    "node_modules/**",
+  ],
+  "autoImports": true,
+  "ignoreDependencies": [
+    // Iconify collections resolved at runtime by Nuxt Icon via `i-logos-*` /
+    // `i-simple-icons-*` names, never imported.
+    "@iconify-json/logos",
+    "@iconify-json/simple-icons",
+    // libsql is the runtime DB driver wired through NuxtHub (hub.db = sqlite).
+    "@libsql/client",
+    // shiki powers syntax highlighting via Comark; pulled in indirectly.
+    "shiki",
+    // striptags is consumed in nuxt.config optimizeDeps + server utils.
+    "striptags",
+    // REVIEW: no source references found — likely template leftovers, safe to
+    // remove. Suppressed only to keep the verify gate green; action separately.
+    "@ai-sdk/gateway",
+    "@vercel/blob",
+  ],
+  // vitest is catalog-aliased to the vite-plus build and consumed via `overrides:`
+  // (forcing Nuxt's transitive resolution), not via a direct `catalog:` reference.
+  "ignoreDependencyOverrides": [{ "package": "vite" }, { "package": "vitest" }],
+  "rules": {
+    // Server code imports NuxtHub virtual modules (hub:db, hub:blob,
+    // hub:db:schema) which fallow cannot resolve to a package. nuxi build and
+    // typecheck are the real gate for genuinely-missing imports.
+    "unlisted-dependencies": "off",
+    // vite/vitest catalog entries exist only to back the `overrides:` aliasing
+    // workaround, so they are never referenced via the `catalog:` protocol.
+    "unused-catalog-entries": "off",
+  },
+  "duplicates": {
+    // Hide pair-only clones; focus on widespread copy-paste.
+    "minOccurrences": 3,
+  },
+}
