@@ -1,46 +1,25 @@
-# Nuxt AI Chatbot Template
+# Premysl
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Premysl is my personal AI assistant — a self-hosted chat app with streaming
+responses, chat history, file uploads, web search and tool calling.
 
-Full-featured AI Chatbot Nuxt application with authentication, chat history, collapsible sidebar, keyboard shortcuts, light & dark mode, command palette and more. Built using [Nuxt UI](https://ui.nuxt.com) components and integrated with [AI SDK](https://ai-sdk.dev) for a complete chat experience.
-
-- [Live demo](https://chat-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
-
-<a href="https://chat-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/chat-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/chat-light.png">
-    <img alt="Nuxt AI Chatbot Template" src="https://ui.nuxt.com/assets/templates/nuxt/chat-light.png">
-  </picture>
-</a>
-
-> The chat template for Vue is on https://github.com/nuxt-ui-templates/chat-vue.
+Built with [Nuxt](https://nuxt.com), [Nuxt UI](https://ui.nuxt.com) and the
+[AI SDK](https://ai-sdk.dev). Started from the [Nuxt UI chat template](https://github.com/nuxt-ui-templates/chat).
 
 ## Features
 
-- ⚡️ **Streaming AI messages** powered by the [AI SDK](https://ai-sdk.dev) with thinking/reasoning support
-- 🤖 **Multiple model support** — Claude Haiku 4.5, Gemini 3 Flash and GPT-5 Nano via [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
+- ⚡️ **Streaming responses** via the [AI SDK](https://ai-sdk.dev) with thinking/reasoning support
+- 🤖 **Multiple models** — Claude, Gemini and GPT through [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
 - 🔍 **Web search** with built-in provider tools (Anthropic, OpenAI)
 - 📊 **Charts and weather** tool calling with rich UI rendering
-- 🔐 **Authentication** via GitHub OAuth using [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils)
-- 💾 **Chat history persistence** using SQLite database ([Turso](https://turso.tech) in production) and [Drizzle ORM](https://orm.drizzle.team)
-- 📎 **File uploads** with drag & drop using [NuxtHub Blob](https://hub.nuxt.com/docs/blob) (requires authentication)
+- 🔐 **GitHub OAuth** auth via [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils)
+- 💾 **Chat history** in SQLite ([Turso](https://turso.tech) in production) via [Drizzle ORM](https://orm.drizzle.team)
+- 📎 **File uploads** with drag & drop using [NuxtHub Blob](https://hub.nuxt.com/docs/blob)
 - ✨ **Markdown rendering** with streaming code highlighting via [Comark](https://comark.dev)
-
-## Quick Start
-
-```bash
-npm create nuxt@latest -- -t ui/chat
-```
-
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fchat&repository-name=chat&env=NUXT_OAUTH_GITHUB_CLIENT_ID%2CNUXT_OAUTH_GITHUB_CLIENT_SECRET%2CNUXT_SESSION_PASSWORD&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22tursocloud%22%2C%22productSlug%22%3A%22database%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D&demo-title=Nuxt+Chat+Template&demo-description=An+AI+chatbot+template+with+GitHub+authentication+and+persistent+chat+history+powered+by+Vercel+AI+SDK.&demo-url=https%3A%2F%2Fchat-template.nuxt.dev&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fchat-dark.png)
 
 ## Setup
 
-Make sure to install the dependencies:
+Install dependencies:
 
 ```bash
 pnpm install
@@ -55,9 +34,9 @@ pnpm db:migrate
 > [!NOTE]
 > In production, configure your database connection. On Vercel, add the [Turso integration](https://vercel.com/integrations/turso) to automatically provision `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`.
 
-### AI Integration
+### AI integration
 
-This template uses the [Vercel AI SDK](https://ai-sdk.dev/) for streaming AI responses with support for multiple providers through [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). When deployed on Vercel, the AI Gateway is configured automatically.
+Uses the [Vercel AI SDK](https://ai-sdk.dev/) with multiple providers through [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). When deployed on Vercel, the gateway is configured automatically.
 
 For local development, set your API key in `.env`:
 
@@ -66,13 +45,13 @@ AI_GATEWAY_API_KEY=<your-vercel-ai-gateway-api-key>
 ```
 
 > [!TIP]
-> With [Vercel AI Gateway](https://vercel.com/docs/ai-gateway), you don't need individual API keys for OpenAI, Anthropic, etc. It provides a unified API to access hundreds of models through a single endpoint with automatic load balancing, fallbacks, and spend monitoring.
+> With [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) you don't need individual provider API keys — it gives a unified endpoint with load balancing, fallbacks and spend monitoring.
 
-### Authentication (Optional)
+### Authentication
 
-This template uses [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) for authentication with GitHub OAuth.
+Uses [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) with GitHub OAuth.
 
-To enable authentication, [create a GitHub OAuth application](https://github.com/settings/applications/new) and set:
+[Create a GitHub OAuth application](https://github.com/settings/applications/new) and set:
 
 ```bash
 NUXT_OAUTH_GITHUB_CLIENT_ID=<your-github-oauth-app-client-id>
@@ -80,27 +59,27 @@ NUXT_OAUTH_GITHUB_CLIENT_SECRET=<your-github-oauth-app-client-secret>
 NUXT_SESSION_PASSWORD=<your-password-minimum-32-characters>
 ```
 
-### Blob Storage (Optional)
+### Blob storage (optional)
 
-This template uses [NuxtHub Blob](https://hub.nuxt.com/docs/blob) for file uploads, which supports multiple storage drivers:
+Uses [NuxtHub Blob](https://hub.nuxt.com/docs/blob) for file uploads, supporting multiple drivers:
 
 - **Local filesystem** (default for development, stored in `.data/blob`)
-- **[Vercel Blob](https://vercel.com/docs/vercel-blob)** (auto-configured when deployed to Vercel)
-- **[Cloudflare R2](https://hub.nuxt.com/docs/blob#set-a-driver)** (when deployed to Cloudflare)
-- **[Amazon S3](https://hub.nuxt.com/docs/blob#set-a-driver)** (with manual configuration)
+- **[Vercel Blob](https://vercel.com/docs/vercel-blob)** (auto-configured on Vercel)
+- **[Cloudflare R2](https://hub.nuxt.com/docs/blob#set-a-driver)** (on Cloudflare)
+- **[Amazon S3](https://hub.nuxt.com/docs/blob#set-a-driver)** (manual configuration)
 
-For **Vercel Blob**, assign a Blob Store to your project from the Vercel dashboard (Project → Storage), then set the token for local development:
+For **Vercel Blob**, assign a Blob Store to your project (Project → Storage), then set the token for local development:
 
 ```bash
 BLOB_READ_WRITE_TOKEN=<your-vercel-blob-token>
 ```
 
 > [!NOTE]
-> File uploads require authentication. See the [NuxtHub Blob documentation](https://hub.nuxt.com/docs/blob#set-a-driver) for configuring other storage drivers.
+> File uploads require authentication.
 
-## Development Server
+## Development
 
-Start the development server on `http://localhost:3000`:
+Start the dev server on `http://localhost:3000`:
 
 ```bash
 pnpm dev
@@ -108,20 +87,16 @@ pnpm dev
 
 ## Production
 
-Build the application for production:
+Build:
 
 ```bash
 pnpm build
 ```
 
-Locally preview production build:
+Preview the production build locally:
 
 ```bash
 pnpm preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-
-## Renovate integration
-
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+See the [deployment docs](https://nuxt.com/docs/getting-started/deployment) for more.
