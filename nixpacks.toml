@@ -2,6 +2,9 @@ providers = ["node"]
 
 [variables]
 NIXPACKS_NODE_VERSION = '24'
+# nuxt build exceeds Node's ~2 GB default heap on this app (shiki grammars +
+# AI SDK); raise the cap so it uses the VPS's available RAM.
+NODE_OPTIONS = '--max-old-space-size=4096'
 
 [phases.install]
 # Nixpacks pins an old corepack that cannot launch pnpm 11
