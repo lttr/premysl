@@ -38,13 +38,4 @@ export default defineNuxtConfig({
       include: ['striptags']
     }
   },
-
-  eslint: {
-    config: {
-      stylistic: {
-        commaDangle: 'never',
-        braceStyle: '1tbs'
-      }
-    }
-  }
 })
