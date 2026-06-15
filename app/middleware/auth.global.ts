@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     public: { requireAuth },
   } = useRuntimeConfig()
 
-  // Open/local mode: no gating.
+  // Open mode: no gating.
   if (!requireAuth) return
   // Avoid redirecting the login page to itself.
   if (to.path === "/login") return

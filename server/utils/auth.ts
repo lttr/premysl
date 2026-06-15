@@ -1,6 +1,6 @@
 import type { H3Event } from "h3"
 
-// Anonymous identity used in open/local mode. A fixed id (not random) so locally
+// Anonymous identity used in open mode. A fixed id (not random) so locally
 // created chats survive cookie/browser changes and all belong to one local user.
 export const LOCAL_USER_ID = "local"
 
@@ -16,9 +16,9 @@ export function isOwner(handle: string, owner: string): boolean {
 
 // Effective user for a request, enforcing the access policy server-side.
 //
-// requireAuth on (production): the request is authorized only when it is both
+// Locked mode (requireAuth on): the request is authorized only when it is both
 // authenticated and the GitHub username equals the configured owner handle.
-// requireAuth off (local): the logged-in user if present, else the fixed
+// Open mode (requireAuth off): the logged-in user if present, else the fixed
 // anonymous local user — so the app works with zero login.
 export async function requireRequestUser(event: H3Event): Promise<RequestUser> {
   const config = useRuntimeConfig(event)
