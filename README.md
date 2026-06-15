@@ -13,7 +13,7 @@ Built with [Nuxt](https://nuxt.com), [Nuxt UI](https://ui.nuxt.com) and the
 - 🔍 **Web search** with built-in provider tools (Anthropic, OpenAI)
 - 📊 **Charts and weather** tool calling with rich UI rendering
 - 🔐 **GitHub OAuth** auth via [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils)
-- 💾 **Chat history** in SQLite ([Turso](https://turso.tech) in production) via [Drizzle ORM](https://orm.drizzle.team)
+- 💾 **Chat history** in SQLite (local file on the VPS, persisted to a volume) via [Drizzle ORM](https://orm.drizzle.team)
 - 📎 **File uploads** with drag & drop using [NuxtHub Blob](https://hub.nuxt.com/docs/blob)
 - ✨ **Markdown rendering** with streaming code highlighting via [Comark](https://comark.dev)
 
@@ -32,7 +32,10 @@ pnpm db:migrate
 ```
 
 > [!NOTE]
-> In production, configure your database connection. On Vercel, add the [Turso integration](https://vercel.com/integrations/turso) to automatically provision `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`.
+> In production the database is a local SQLite file at `.data/db/sqlite.db`
+> (NuxtHub's libsql driver). Mount `.data` on a persistent volume so it survives
+> redeploys; migrations are applied automatically on container start (see the
+> `[start]` command in `nixpacks.toml`).
 
 ### AI integration
 
@@ -112,7 +115,8 @@ pnpm preview
 Deploys to [Coolify](https://coolify.io) via Nixpacks (`nixpacks.toml`,
 Node 24, port 3000). Pushes to `main` auto-deploy through the configured
 GitHub App. The app needs runtime secrets to boot: `NUXT_SESSION_PASSWORD`,
-the libsql database URL/token, GitHub OAuth credentials, and AI provider keys.
+GitHub OAuth credentials, and AI provider keys. The database is a local SQLite
+file on the mounted `.data` volume — no database URL or token required.
 
 See the [Nuxt deployment docs](https://nuxt.com/docs/getting-started/deployment)
 for other targets.

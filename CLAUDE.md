@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Premysl: Lukas's single-tenant, self-hosted AI chat assistant. Nuxt 4, Nitro, Drizzle/SQLite (Turso in prod), NuxtHub (DB + Blob), Vercel AI SDK.
+Premysl: Lukas's single-tenant, self-hosted AI chat assistant. Nuxt 4, Nitro, Drizzle/SQLite (local file on the VPS in prod), NuxtHub (DB + Blob), Vercel AI SDK.
 
 ## Commands
 

@@ -10,3 +10,9 @@ NODE_OPTIONS = '--max-old-space-size=4096'
 # Nixpacks pins an old corepack that cannot launch pnpm 11
 # (ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING); install a current one first.
 cmds = ["npm install -g corepack@latest && corepack enable", "pnpm i --frozen-lockfile"]
+
+# Apply DB migrations against the mounted /app/.data volume before booting, so a
+# fresh volume gets its schema on first deploy and later deploys auto-migrate.
+# https://hub.nuxt.com/docs/database/migrations#generating-migrations
+[start]
+cmd = "pnpm exec nuxt db migrate && node .output/server/index.mjs"
