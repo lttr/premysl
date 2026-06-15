@@ -40,6 +40,22 @@ GitHub login, so work done in **open mode** is not orphaned when the app is late
 opened by a logged-in **owner**.
 _Avoid_: migration, claiming, import
 
+## GitHub integration
+
+**GitHub connection**:
+The stored GitHub credential — the OAuth access token (with `repo` scope) kept
+after the **owner** logs in — that grants Premysl the ability to call the GitHub
+API on the owner's behalf. Exists independently of which repositories are chosen:
+it answers "can we talk to GitHub at all".
+_Avoid_: GitHub integration, GitHub auth, token (when the credential as a concept is meant)
+
+**Linked repository**:
+A specific GitHub repository the **owner** has chosen to associate with the
+account so the assistant may retrieve data from it. The act is **linking**. A
+linked repository answers "which repositories are in scope for retrieval",
+distinct from the **GitHub connection** that makes retrieval possible at all.
+_Avoid_: associated repository, connected repository, repo source
+
 ## Example dialogue
 
 > **Dev:** I ran it locally and never logged in, but my chats still saved. Whose
