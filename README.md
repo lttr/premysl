@@ -59,23 +59,16 @@ NUXT_OAUTH_GITHUB_CLIENT_SECRET=<your-github-oauth-app-client-secret>
 NUXT_SESSION_PASSWORD=<your-password-minimum-32-characters>
 ```
 
-### Blob storage (optional)
+### Blob storage
 
-Uses [NuxtHub Blob](https://hub.nuxt.com/docs/blob) for file uploads, supporting multiple drivers:
-
-- **Local filesystem** (default for development, stored in `.data/blob`)
-- **[Vercel Blob](https://vercel.com/docs/vercel-blob)** (auto-configured on Vercel)
-- **[Cloudflare R2](https://hub.nuxt.com/docs/blob#set-a-driver)** (on Cloudflare)
-- **[Amazon S3](https://hub.nuxt.com/docs/blob#set-a-driver)** (manual configuration)
-
-For **Vercel Blob**, assign a Blob Store to your project (Project → Storage), then set the token for local development:
-
-```bash
-BLOB_READ_WRITE_TOKEN=<your-vercel-blob-token>
-```
+Uses [NuxtHub Blob](https://hub.nuxt.com/docs/blob) for file uploads, backed by
+the local filesystem driver (stored in `.data/blob`). Both in development and in
+production on the VPS, uploads are written to disk by the Node process — no
+external blob service or token is required.
 
 > [!NOTE]
-> File uploads require authentication.
+> On the VPS, mount `.data/blob` on a persistent volume so uploads survive
+> redeploys. File uploads require authentication.
 
 ## Development
 
