@@ -2,14 +2,8 @@ import { db, schema } from "hub:db"
 import { and, eq } from "drizzle-orm"
 import { z } from "zod"
 
-const sessionSchema = z.object({
-  id: z.string(),
-  user: z.object({ id: z.string() }).partial().optional(),
-})
-
 export default defineEventHandler(async (event) => {
-  const session = sessionSchema.parse(await getUserSession(event))
-  const userId = session.user?.id ?? session.id
+  const { id: userId } = await requireRequestUser(event)
 
   const { id } = await getValidatedRouterParams(event, (data) =>
     z.object({ id: z.string() }).parse(data),

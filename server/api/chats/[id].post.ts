@@ -25,11 +25,6 @@ defineRouteMeta({
   },
 })
 
-const sessionSchema = z.object({
-  id: z.string(),
-  user: z.object({ id: z.string().optional(), username: z.string().optional() }).optional(),
-})
-
 function needsTitle(title: string | null | undefined): boolean {
   return title === null || title === undefined || title === ""
 }
@@ -146,8 +141,7 @@ function buildSystemPrompt(username: string | undefined): string {
 }
 
 export default defineEventHandler(async (event) => {
-  const session = sessionSchema.parse(await getUserSession(event))
-  const userId = session.user?.id ?? session.id
+  const { id: userId, username } = await requireRequestUser(event)
 
   const { id } = await getValidatedRouterParams(event, (data) =>
     z.object({ id: z.string() }).parse(data),
@@ -190,7 +184,7 @@ export default defineEventHandler(async (event) => {
       const result = streamText({
         abortSignal: abortController.signal,
         model: resolveModel(model),
-        system: buildSystemPrompt(session.user?.username),
+        system: buildSystemPrompt(username),
         messages: await convertToModelMessages(messages),
         tools: buildTools(provider),
         providerOptions: PROVIDER_OPTIONS,

@@ -2,6 +2,9 @@
 import type { DropdownMenuItem } from "@nuxt/ui"
 
 const { loggedIn, openInPopup } = useUserSession()
+const {
+  public: { requireAuth },
+} = useRuntimeConfig()
 const { renameChat, deleteChat } = useChatActions()
 
 const sidebarOpen = ref(false)
@@ -179,7 +182,7 @@ defineShortcuts({
       <template #footer="{ collapsed }">
         <UserMenu v-if="loggedIn" :collapsed="collapsed" />
         <UButton
-          v-else
+          v-else-if="requireAuth"
           :label="collapsed ? '' : 'Login with GitHub'"
           icon="i-simple-icons-github"
           color="neutral"

@@ -17,6 +17,14 @@ const sessionSchema = z.object({
 
 export default defineOAuthGitHubEventHandler({
   async onSuccess(event: H3Event, { user: ghUser }: { user: GitHubUser }) {
+    const config = useRuntimeConfig(event)
+
+    // In locked mode, only the owner may obtain a session. Fail closed (no
+    // session issued) for any non-owner or when no owner handle is configured.
+    if (config.public.requireAuth && !isOwner(ghUser.login, config.ownerGithubHandle)) {
+      return sendRedirect(event, "/login?error=forbidden")
+    }
+
     const session = sessionSchema.parse(await getUserSession(event))
 
     let user = await db.query.users.findFirst({
@@ -36,15 +44,17 @@ export default defineOAuthGitHubEventHandler({
           providerId: ghUser.id.toString(),
         })
         .returning()
-    } else {
-      // Assign anonymous chats with session id to user
-      await db
-        .update(schema.chats)
-        .set({
-          userId: user.id,
-        })
-        .where(eq(schema.chats.userId, session.id))
     }
+
+    if (!user) {
+      throw createError({ statusCode: 500, statusMessage: "Failed to create user" })
+    }
+
+    // Adopt any anonymous local chats created in open mode into this account.
+    await db
+      .update(schema.chats)
+      .set({ userId: user.id })
+      .where(eq(schema.chats.userId, LOCAL_USER_ID))
 
     await setUserSession(event, { user })
 

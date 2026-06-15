@@ -20,6 +20,17 @@ export default defineNuxtConfig({
     viewTransition: true,
   },
 
+  runtimeConfig: {
+    // NUXT_OWNER_GITHUB_HANDLE — e.g. "lttr". Private, server-only; never
+    // serialized to the client. Required when requireAuth is on (fail closed).
+    ownerGithubHandle: "",
+    public: {
+      // NUXT_PUBLIC_REQUIRE_AUTH — on in prod, off in dev by default. Only this
+      // boolean reaches the client (so middleware knows whether to redirect).
+      requireAuth: process.env.NODE_ENV === "production",
+    },
+  },
+
   compatibilityDate: "2024-07-11",
 
   typescript: {
