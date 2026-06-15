@@ -38,6 +38,6 @@ export const TITLE_MODEL: ModelKey = "haiku"
 // Options for the model <select> in the UI (value is the model key).
 export const MODEL_OPTIONS = Object.entries(MODELS).map(([key, model]) => ({
   value: key,
-  label: model.label,
+  label: key,
   icon: model.icon,
 }))

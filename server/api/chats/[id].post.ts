@@ -45,6 +45,9 @@ export default defineEventHandler(async (event) => {
     }).parse,
   )
 
+  // model passed isModelKey validation above, so this lookup is always defined.
+  const provider = isModelKey(model) ? MODELS[model].provider : null
+
   const chat = await db.query.chats.findFirst({
     where: () =>
       and(
@@ -124,12 +127,12 @@ export default defineEventHandler(async (event) => {
         tools: {
           chart: chartTool,
           weather: weatherTool,
-          ...(model.startsWith("anthropic/") && {
+          ...(provider === "anthropic" && {
             web_search: anthropic.tools.webSearch_20250305(),
           }),
-          ...(model.startsWith("openai/") && { web_search: openai.tools.webSearch() }),
+          ...(provider === "openai" && { web_search: openai.tools.webSearch() }),
           // TODO: enable once AI SDK supports combining provider-defined tools with custom tools
-          // ...(model.startsWith('google/') && { google_search: google.tools.googleSearch({}) })
+          // ...(provider === "google" && { google_search: google.tools.googleSearch({}) })
         },
         providerOptions: {
           anthropic: {
