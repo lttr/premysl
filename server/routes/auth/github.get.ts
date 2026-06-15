@@ -1,9 +1,23 @@
+import type { H3Error, H3Event } from "h3"
 import { db, schema } from "hub:db"
 import { and, eq } from "drizzle-orm"
+import { z } from "zod"
+
+interface GitHubUser {
+  id: number
+  login: string
+  name: string | null
+  email: string | null
+  avatar_url: string
+}
+
+const sessionSchema = z.object({
+  id: z.string(),
+})
 
 export default defineOAuthGitHubEventHandler({
-  async onSuccess(event, { user: ghUser }) {
-    const session = await getUserSession(event)
+  async onSuccess(event: H3Event, { user: ghUser }: { user: GitHubUser }) {
+    const session = sessionSchema.parse(await getUserSession(event))
 
     let user = await db.query.users.findFirst({
       where: () =>
@@ -14,9 +28,9 @@ export default defineOAuthGitHubEventHandler({
         .insert(schema.users)
         .values({
           id: session.id,
-          name: ghUser.name || "",
-          email: ghUser.email || "",
-          avatar: ghUser.avatar_url || "",
+          name: ghUser.name ?? "",
+          email: ghUser.email ?? "",
+          avatar: ghUser.avatar_url,
           username: ghUser.login,
           provider: "github",
           providerId: ghUser.id.toString(),
@@ -37,7 +51,7 @@ export default defineOAuthGitHubEventHandler({
     return sendRedirect(event, "/")
   },
   // Optional, will return a json error and 401 status code by default
-  onError(event, error) {
+  async onError(event: H3Event, error: H3Error) {
     console.error("GitHub OAuth error:", error)
     return sendRedirect(event, "/")
   },

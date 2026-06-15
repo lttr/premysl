@@ -22,7 +22,9 @@ const { data: chats, refresh: refreshChats } = await useFetch("/api/chats", {
 onNuxtReady(async () => {
   const first10 = (chats.value || []).slice(0, 10)
   for (const chat of first10) {
-    // prefetch the chat and let the browser cache it
+    // prefetch the chat and let the browser cache it; kept sequential on purpose
+    // so prefetching does not fire ten parallel requests on app ready
+    // (no-await-in-loop is disabled for this file in vite.config.ts)
     await $fetch(`/api/chats/${chat.id}`)
   }
 })
@@ -35,22 +37,27 @@ watch(loggedIn, () => {
 
 const { groups } = useChats(chats)
 
-const items = computed(() =>
-  groups.value?.flatMap((group) => {
-    return [
-      {
-        label: group.label,
-        type: "label" as const,
-      },
-      ...group.items.map((item) => ({
+const items = computed(() => {
+  const groupsValue = groups.value
+  if (!groupsValue) return undefined
+
+  const result = []
+  for (const group of groupsValue) {
+    result.push({
+      label: group.label,
+      type: "label" as const,
+    })
+    for (const item of group.items) {
+      result.push({
         ...item,
         slot: "chat" as const,
         icon: undefined,
         class: item.label === "Untitled" ? "text-muted" : "",
-      })),
-    ]
-  }),
-)
+      })
+    }
+  }
+  return result
+})
 
 function getChatActions(item: { id: string; label: string }): DropdownMenuItem[][] {
   return [

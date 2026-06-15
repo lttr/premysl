@@ -17,7 +17,8 @@ export const FILE_UPLOAD_CONFIG = {
 export function getFileIcon(mimeType: string, fileName?: string): string {
   if (mimeType.startsWith("image/")) return "i-lucide-image"
   if (mimeType === "application/pdf") return "i-lucide-file-text"
-  if (mimeType === "text/csv" || fileName?.endsWith(".csv")) return "i-lucide-file-spreadsheet"
+  if (mimeType === "text/csv" || fileName?.endsWith(".csv") === true)
+    return "i-lucide-file-spreadsheet"
   return "i-lucide-file"
 }
 

@@ -2,30 +2,25 @@ import { db, schema } from "hub:db"
 import { and, eq } from "drizzle-orm"
 import { z } from "zod"
 
-export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+const sessionSchema = z.object({
+  id: z.string(),
+  user: z.object({ id: z.string() }).partial().optional(),
+})
 
-  const { id } = await getValidatedRouterParams(
-    event,
-    z.object({
-      id: z.string(),
-    }).parse,
+export default defineEventHandler(async (event) => {
+  const session = sessionSchema.parse(await getUserSession(event))
+  const userId = session.user?.id ?? session.id
+
+  const { id } = await getValidatedRouterParams(event, (data) =>
+    z.object({ id: z.string() }).parse(data),
   )
 
-  const { messageId, isUpvoted } = await readValidatedBody(
-    event,
-    z.object({
-      messageId: z.string(),
-      isUpvoted: z.boolean().optional(),
-    }).parse,
+  const { messageId, isUpvoted } = await readValidatedBody(event, (data) =>
+    z.object({ messageId: z.string(), isUpvoted: z.boolean().optional() }).parse(data),
   )
 
   const chat = await db.query.chats.findFirst({
-    where: () =>
-      and(
-        eq(schema.chats.id, id as string),
-        eq(schema.chats.userId, session.user?.id || session.id),
-      ),
+    where: () => and(eq(schema.chats.id, id), eq(schema.chats.userId, userId)),
   })
 
   if (!chat) {
@@ -33,7 +28,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const message = await db.query.messages.findFirst({
-    where: () => and(eq(schema.messages.id, messageId), eq(schema.messages.chatId, id as string)),
+    where: () => and(eq(schema.messages.id, messageId), eq(schema.messages.chatId, id)),
   })
 
   if (!message) {
@@ -47,12 +42,12 @@ export default defineEventHandler(async (event) => {
   if (isUpvoted === undefined) {
     await db
       .delete(schema.votes)
-      .where(and(eq(schema.votes.chatId, id as string), eq(schema.votes.messageId, messageId)))
+      .where(and(eq(schema.votes.chatId, id), eq(schema.votes.messageId, messageId)))
   } else {
     await db
       .insert(schema.votes)
       .values({
-        chatId: id as string,
+        chatId: id,
         messageId,
         isUpvoted,
       })

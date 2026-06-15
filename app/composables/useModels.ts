@@ -1,6 +1,9 @@
 import { DEFAULT_MODEL, MODEL_OPTIONS, isModelKey } from "#shared/utils/models"
 
-export function useModels() {
+export function useModels(): {
+  models: typeof MODEL_OPTIONS
+  model: Ref<string>
+} {
   const model = useCookie<string>("model", { default: () => DEFAULT_MODEL })
 
   // Reset stale cookie values (e.g. old gateway-format keys) to a valid model

@@ -40,19 +40,14 @@ const categories = (
   invocation: ChartUIToolInvocation,
 ): Record<string, BulletLegendItemInterface> => {
   if (!invocation.output?.series) return {}
-  return invocation.output.series.reduce(
-    (
-      acc: Record<string, BulletLegendItemInterface>,
-      serie: { key: string; name: string; color: string },
-    ) => {
-      acc[serie.key] = {
-        name: serie.name,
-        color: serie.color,
-      }
-      return acc
-    },
-    {} as Record<string, BulletLegendItemInterface>,
-  )
+  const result: Record<string, BulletLegendItemInterface> = {}
+  for (const serie of invocation.output.series) {
+    result[serie.key] = {
+      name: serie.name,
+      color: serie.color,
+    }
+  }
+  return result
 }
 
 const formatValue = (value: string | number | undefined): string => {

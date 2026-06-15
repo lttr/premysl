@@ -8,11 +8,129 @@ interface ChatListItem {
   createdAt: string | Date
 }
 
-export function useChatActions() {
+interface CsrfHeader {
+  name: string
+  value: string
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : ""
+}
+
+// nuxt-csurf types `csrf`/`headerName` as `any`; expose strictly-typed strings.
+function useCsrfHeader(): CsrfHeader {
+  const result: { csrf: unknown; headerName: unknown } = useCsrf()
+  return { name: asString(result.headerName), value: asString(result.csrf) }
+}
+
+// Modal `instance.result` resolves to an unresolved (`error`) type under the
+// lint tsconfig; funnel it through `unknown` before narrowing.
+async function awaitModalResult(instance: { result: unknown }): Promise<unknown> {
+  return instance.result
+}
+
+async function renameChat(
+  deps: { renameModal: ReturnType<ReturnType<typeof useOverlay>["create"]>; csrf: CsrfHeader },
+  toast: ReturnType<typeof useToast>,
+  id: string,
+  currentTitle?: string | null,
+): Promise<string | null> {
+  const instance = deps.renameModal.open({ title: currentTitle ?? "" })
+  const raw = await awaitModalResult(instance)
+  // ModalRename emits `string | false` on close.
+  if (typeof raw !== "string" || raw === "" || raw === currentTitle) return null
+  const result = raw
+
+  try {
+    await $fetch(`/api/chats/${id}/title`, {
+      method: "PATCH",
+      headers: { [deps.csrf.name]: deps.csrf.value },
+      body: { title: result },
+    })
+
+    const chatsCache = useNuxtData<ChatListItem[]>("chats")
+    if (chatsCache.data.value) {
+      // Copy-on-write: build new objects so the reactive cache updates; in-place
+      // mutation would not trigger reactivity here.
+      const updated: ChatListItem[] = []
+      for (const c of chatsCache.data.value) {
+        updated.push(c.id === id ? { ...c, label: result } : c)
+      }
+      chatsCache.data.value = updated
+    }
+
+    const chatCache = useNuxtData<{ title: string | null }>(`chat-${id}`)
+    if (chatCache.data.value) {
+      chatCache.data.value = { ...chatCache.data.value, title: result }
+    }
+
+    return result
+  } catch {
+    toast.add({
+      description: "Failed to rename chat",
+      icon: "i-lucide-alert-circle",
+      color: "error",
+    })
+
+    return null
+  }
+}
+
+async function deleteChat(
+  deps: {
+    deleteModal: ReturnType<ReturnType<typeof useOverlay>["create"]>
+    csrf: CsrfHeader
+    route: ReturnType<typeof useRoute>
+  },
+  toast: ReturnType<typeof useToast>,
+  id: string,
+): Promise<boolean> {
+  const instance = deps.deleteModal.open()
+  // ModalConfirm emits `boolean` on close.
+  const confirmed = (await awaitModalResult(instance)) === true
+  if (!confirmed) return false
+
+  try {
+    await $fetch(`/api/chats/${id}`, {
+      method: "DELETE",
+      headers: { [deps.csrf.name]: deps.csrf.value },
+    })
+
+    toast.add({
+      title: "Chat deleted",
+      description: "Your chat has been deleted",
+      icon: "i-lucide-trash",
+    })
+
+    const chatsCache = useNuxtData<ChatListItem[]>("chats")
+    if (chatsCache.data.value) {
+      chatsCache.data.value = chatsCache.data.value.filter((c) => c.id !== id)
+    }
+
+    if (deps.route.params.id === id) {
+      await navigateTo("/")
+    }
+
+    return true
+  } catch {
+    toast.add({
+      description: "Failed to delete chat",
+      icon: "i-lucide-alert-circle",
+      color: "error",
+    })
+
+    return false
+  }
+}
+
+export function useChatActions(): {
+  renameChat: (id: string, currentTitle?: string | null) => Promise<string | null>
+  deleteChat: (id: string) => Promise<boolean>
+} {
   const route = useRoute()
   const toast = useToast()
   const overlay = useOverlay()
-  const { csrf, headerName } = useCsrf()
+  const csrf = useCsrfHeader()
 
   const renameModal = overlay.create(LazyModalRename)
   const deleteModal = overlay.create(LazyModalConfirm, {
@@ -23,84 +141,9 @@ export function useChatActions() {
     },
   })
 
-  async function renameChat(id: string, currentTitle?: string | null): Promise<string | null> {
-    const instance = renameModal.open({ title: currentTitle ?? "" })
-    const result = await instance.result
-
-    if (!result || result === currentTitle) return null
-
-    try {
-      await $fetch(`/api/chats/${id}/title`, {
-        method: "PATCH",
-        headers: { [headerName]: csrf },
-        body: { title: result },
-      })
-
-      const chatsCache = useNuxtData<ChatListItem[]>("chats")
-      if (chatsCache.data.value) {
-        chatsCache.data.value = chatsCache.data.value.map((c) =>
-          c.id === id ? { ...c, label: result } : c,
-        )
-      }
-
-      const chatCache = useNuxtData<{ title: string | null }>(`chat-${id}`)
-      if (chatCache.data.value) {
-        chatCache.data.value = { ...chatCache.data.value, title: result }
-      }
-
-      return result
-    } catch {
-      toast.add({
-        description: "Failed to rename chat",
-        icon: "i-lucide-alert-circle",
-        color: "error",
-      })
-
-      return null
-    }
-  }
-
-  async function deleteChat(id: string): Promise<boolean> {
-    const instance = deleteModal.open()
-    const result = await instance.result
-
-    if (!result) return false
-
-    try {
-      await $fetch(`/api/chats/${id}`, {
-        method: "DELETE",
-        headers: { [headerName]: csrf },
-      })
-
-      toast.add({
-        title: "Chat deleted",
-        description: "Your chat has been deleted",
-        icon: "i-lucide-trash",
-      })
-
-      const chatsCache = useNuxtData<ChatListItem[]>("chats")
-      if (chatsCache.data.value) {
-        chatsCache.data.value = chatsCache.data.value.filter((c) => c.id !== id)
-      }
-
-      if (route.params.id === id) {
-        navigateTo("/")
-      }
-
-      return true
-    } catch {
-      toast.add({
-        description: "Failed to delete chat",
-        icon: "i-lucide-alert-circle",
-        color: "error",
-      })
-
-      return false
-    }
-  }
-
   return {
-    renameChat,
-    deleteChat,
+    renameChat: async (id, currentTitle) =>
+      renameChat({ renameModal, csrf }, toast, id, currentTitle),
+    deleteChat: async (id) => deleteChat({ deleteModal, csrf, route }, toast, id),
   }
 }

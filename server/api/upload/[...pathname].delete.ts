@@ -1,16 +1,20 @@
 import { blob } from "hub:blob"
 import { z } from "zod"
 
-export default defineEventHandler(async (event) => {
-  const { user } = await requireUserSession(event)
-  const { username } = user
+const sessionUserSchema = z.object({
+  username: z.string(),
+})
 
-  const { pathname } = await getValidatedRouterParams(
-    event,
-    z.object({
-      pathname: z.string().min(1),
-    }).parse,
-  )
+export default defineEventHandler(async (event) => {
+  const session: unknown = await requireUserSession(event)
+  const {
+    user: { username },
+  } = z.object({ user: sessionUserSchema }).parse(session)
+
+  const paramsSchema = z.object({
+    pathname: z.string().min(1),
+  })
+  const { pathname } = await getValidatedRouterParams(event, (data) => paramsSchema.parse(data))
 
   if (!pathname.startsWith(`${username}/`)) {
     throw createError({
@@ -21,5 +25,5 @@ export default defineEventHandler(async (event) => {
 
   await blob.del(pathname)
 
-  return sendNoContent(event)
+  sendNoContent(event)
 })

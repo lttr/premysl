@@ -47,7 +47,7 @@ const chat = new Chat({
     if (dataPart.type === "data-chat-title") {
       await refreshNuxtData("chats")
       const chatsCache = useNuxtData<{ id: string; label: string }[]>("chats")
-      const updated = chatsCache.data.value?.find((c) => c.id === data.value!.id)
+      const updated = chatsCache.data.value?.find((c) => c.id === data.value?.id)
       if (updated && updated.label !== "Untitled") {
         title.value = updated.label
       }
@@ -94,8 +94,10 @@ function startEdit(message: UIMessage) {
 }
 
 async function saveEdit(message: UIMessage, text: string) {
+  const chatId = data.value?.id
+  if (chatId === undefined) return
   try {
-    await $fetch(`/api/chats/${data.value!.id}/messages`, {
+    await $fetch(`/api/chats/${chatId}/messages`, {
       method: "DELETE",
       headers: { [headerName]: csrf },
       body: { messageId: message.id, type: "edit" },
@@ -114,8 +116,10 @@ async function saveEdit(message: UIMessage, text: string) {
 }
 
 async function regenerateMessage(message: UIMessage) {
+  const chatId = data.value?.id
+  if (chatId === undefined) return
   try {
-    await $fetch(`/api/chats/${data.value!.id}/messages`, {
+    await $fetch(`/api/chats/${chatId}/messages`, {
       method: "DELETE",
       headers: { [headerName]: csrf },
       body: { messageId: message.id, type: "regenerate" },
@@ -132,14 +136,20 @@ async function regenerateMessage(message: UIMessage) {
   chat.regenerate({ messageId: message.id })
 }
 
-function getVote(messageId: string) {
-  const vote = votes.value?.find((v) => v.messageId === messageId)
-  if (!vote) return null
-  return !!vote.isUpvoted
+function getVote(messageId: string): boolean | null {
+  const existing = votes.value?.find((v) => v.messageId === messageId)
+  if (!existing) return null
+  return Boolean(existing.isUpvoted)
 }
 
 async function vote(message: UIMessage, isUpvoted: boolean) {
-  const snapshot = (votes.value ?? []).map((v) => ({ ...v }))
+  const chatId = data.value?.id
+  if (chatId === undefined) return
+
+  const snapshot: typeof votes.value = []
+  for (const v of votes.value ?? []) {
+    snapshot.push({ ...v })
+  }
   const toggling = getVote(message.id) === isUpvoted
   const next = toggling ? null : isUpvoted
 
@@ -148,11 +158,11 @@ async function vote(message: UIMessage, isUpvoted: boolean) {
       ? (votes.value ?? []).filter((v) => v.messageId !== message.id)
       : [
           ...(votes.value ?? []).filter((v) => v.messageId !== message.id),
-          { chatId: data.value!.id, messageId: message.id, isUpvoted: next },
+          { chatId, messageId: message.id, isUpvoted: next },
         ]
 
   try {
-    await $fetch(`/api/chats/${data.value!.id}/votes`, {
+    await $fetch(`/api/chats/${chatId}/votes`, {
       method: "POST",
       headers: { [headerName]: csrf },
       body: next === null ? { messageId: message.id } : { messageId: message.id, isUpvoted: next },

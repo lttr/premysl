@@ -25,83 +25,103 @@ defineRouteMeta({
   },
 })
 
-export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+const sessionSchema = z.object({
+  id: z.string(),
+  user: z.object({ id: z.string().optional(), username: z.string().optional() }).optional(),
+})
 
-  const { id } = await getValidatedRouterParams(
-    event,
-    z.object({
-      id: z.string(),
-    }).parse,
-  )
+function needsTitle(title: string | null | undefined): boolean {
+  return title === null || title === undefined || title === ""
+}
 
-  const { model, messages } = await readValidatedBody(
-    event,
-    z.object({
-      model: z.string().refine(isModelKey, {
-        message: "Invalid model",
-      }),
-      messages: z.array(z.custom<UIMessage>()),
-    }).parse,
-  )
+async function persistMessages(chatId: string, messages: UIMessage[]): Promise<void> {
+  await db
+    .insert(schema.messages)
+    .values(
+      messages.map((message) => ({
+        id: message.id,
+        chatId,
+        role: message.role,
+        parts: message.parts,
+      })),
+    )
+    .onConflictDoNothing()
+}
 
-  // model passed isModelKey validation above, so this lookup is always defined.
-  const provider = isModelKey(model) ? MODELS[model].provider : null
+// Build the tool set for a request, gating provider-defined web-search tools by
+// provider. `provider` is widened to string so future providers (openai/google)
+// can be enabled in MODELS without tripping literal-narrowing comparisons.
+function buildTools(provider: string | null) {
+  return {
+    chart: chartTool,
+    weather: weatherTool,
+    ...(provider === "anthropic" && {
+      web_search: anthropic.tools.webSearch_20250305(),
+    }),
+    ...(provider === "openai" && { web_search: openai.tools.webSearch() }),
+    // TODO: enable once AI SDK supports combining provider-defined tools with custom tools
+    // ...(provider === "google" && { google_search: google.tools.googleSearch({}) })
+  }
+}
 
-  const chat = await db.query.chats.findFirst({
-    where: () =>
-      and(
-        eq(schema.chats.id, id as string),
-        eq(schema.chats.userId, session.user?.id || session.id),
-      ),
-    with: {
-      messages: true,
+const PROVIDER_OPTIONS = {
+  anthropic: {
+    thinking: {
+      type: "enabled",
+      budgetTokens: 2048,
     },
+  } satisfies AnthropicLanguageModelOptions,
+  google: {
+    thinkingConfig: {
+      includeThoughts: true,
+      thinkingLevel: "low",
+    },
+  } satisfies GoogleLanguageModelOptions,
+  openai: {
+    reasoningEffort: "low",
+    reasoningSummary: "detailed",
+  } satisfies OpenAILanguageModelResponsesOptions,
+}
+
+// Generate and persist a chat title from the first message when one is missing.
+async function ensureTitle(
+  chatId: string,
+  title: string | null | undefined,
+  messages: UIMessage[],
+): Promise<void> {
+  if (!needsTitle(title)) return
+  const { text } = await generateText({
+    model: resolveModel(TITLE_MODEL),
+    system: `You are a title generator for a chat:
+        - Generate a short title based on the first user's message
+        - The title should be less than 30 characters long
+        - The title should be a summary of the user's message
+        - Do not use quotes (' or ") or colons (:) or any other punctuation
+        - Do not use markdown, just plain text`,
+    prompt: JSON.stringify(messages[0]),
   })
-  if (!chat) {
-    throw createError({ statusCode: 404, statusMessage: "Chat not found" })
-  }
+  await db.update(schema.chats).set({ title: text }).where(eq(schema.chats.id, chatId))
+}
 
-  if (!chat.title) {
-    const { text: title } = await generateText({
-      model: resolveModel(TITLE_MODEL),
-      system: `You are a title generator for a chat:
-          - Generate a short title based on the first user's message
-          - The title should be less than 30 characters long
-          - The title should be a summary of the user's message
-          - Do not use quotes (' or ") or colons (:) or any other punctuation
-          - Do not use markdown, just plain text`,
-      prompt: JSON.stringify(messages[0]),
-    })
-
-    await db
-      .update(schema.chats)
-      .set({ title })
-      .where(eq(schema.chats.id, id as string))
-  }
-
+// Persist the latest user message (upserting parts) when continuing a chat.
+async function saveLastUserMessage(chatId: string, messages: UIMessage[]): Promise<void> {
   const lastMessage = messages[messages.length - 1]
-  if (lastMessage?.role === "user" && messages.length > 1) {
-    await db
-      .insert(schema.messages)
-      .values({
-        id: lastMessage.id,
-        chatId: id as string,
-        role: "user",
-        parts: lastMessage.parts,
-      })
-      .onConflictDoUpdate({ target: schema.messages.id, set: { parts: lastMessage.parts } })
-  }
+  if (lastMessage?.role !== "user" || messages.length <= 1) return
+  await db
+    .insert(schema.messages)
+    .values({
+      id: lastMessage.id,
+      chatId,
+      role: "user",
+      parts: lastMessage.parts,
+    })
+    .onConflictDoUpdate({ target: schema.messages.id, set: { parts: lastMessage.parts } })
+}
 
-  const abortController = new AbortController()
-  event.node.req.on("close", () => abortController.abort())
-
-  const stream = createUIMessageStream({
-    execute: async ({ writer }) => {
-      const result = streamText({
-        abortSignal: abortController.signal,
-        model: resolveModel(model),
-        system: `You are a knowledgeable and helpful AI assistant. ${session.user?.username ? `The user's name is ${session.user.username}.` : ""} Your goal is to provide clear, accurate, and well-structured responses.
+function buildSystemPrompt(username: string | undefined): string {
+  const namePart =
+    username !== undefined && username !== "" ? `The user's name is ${username}.` : ""
+  return `You are a knowledgeable and helpful AI assistant. ${namePart} Your goal is to provide clear, accurate, and well-structured responses.
 
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
@@ -122,41 +142,63 @@ export default defineEventHandler(async (event) => {
 - Be concise yet comprehensive
 - Use examples when helpful
 - Break down complex topics into digestible parts
-- Maintain a friendly, professional tone`,
+- Maintain a friendly, professional tone`
+}
+
+export default defineEventHandler(async (event) => {
+  const session = sessionSchema.parse(await getUserSession(event))
+  const userId = session.user?.id ?? session.id
+
+  const { id } = await getValidatedRouterParams(event, (data) =>
+    z.object({ id: z.string() }).parse(data),
+  )
+
+  const { model, messages } = await readValidatedBody(event, (data) =>
+    z
+      .object({
+        model: z.string().refine(isModelKey, {
+          message: "Invalid model",
+        }),
+        messages: z.array(z.custom<UIMessage>()),
+      })
+      .parse(data),
+  )
+
+  // model passed isModelKey validation above, so this lookup is always defined.
+  const provider = isModelKey(model) ? MODELS[model].provider : null
+
+  const chat = await db.query.chats.findFirst({
+    where: () => and(eq(schema.chats.id, id), eq(schema.chats.userId, userId)),
+    with: {
+      messages: true,
+    },
+  })
+  if (!chat) {
+    throw createError({ statusCode: 404, statusMessage: "Chat not found" })
+  }
+
+  await ensureTitle(id, chat.title, messages)
+  await saveLastUserMessage(id, messages)
+
+  const abortController = new AbortController()
+  event.node.req.on("close", () => {
+    abortController.abort()
+  })
+
+  const stream = createUIMessageStream({
+    execute: async ({ writer }) => {
+      const result = streamText({
+        abortSignal: abortController.signal,
+        model: resolveModel(model),
+        system: buildSystemPrompt(session.user?.username),
         messages: await convertToModelMessages(messages),
-        tools: {
-          chart: chartTool,
-          weather: weatherTool,
-          ...(provider === "anthropic" && {
-            web_search: anthropic.tools.webSearch_20250305(),
-          }),
-          ...(provider === "openai" && { web_search: openai.tools.webSearch() }),
-          // TODO: enable once AI SDK supports combining provider-defined tools with custom tools
-          // ...(provider === "google" && { google_search: google.tools.googleSearch({}) })
-        },
-        providerOptions: {
-          anthropic: {
-            thinking: {
-              type: "enabled",
-              budgetTokens: 2048,
-            },
-          } satisfies AnthropicLanguageModelOptions,
-          google: {
-            thinkingConfig: {
-              includeThoughts: true,
-              thinkingLevel: "low",
-            },
-          } satisfies GoogleLanguageModelOptions,
-          openai: {
-            reasoningEffort: "low",
-            reasoningSummary: "detailed",
-          } satisfies OpenAILanguageModelResponsesOptions,
-        },
+        tools: buildTools(provider),
+        providerOptions: PROVIDER_OPTIONS,
         stopWhen: stepCountIs(5),
         experimental_transform: smoothStream(),
       })
 
-      if (!chat.title) {
+      if (needsTitle(chat.title)) {
         writer.write({
           type: "data-chat-title",
           data: { message: "Generating title..." },
@@ -171,18 +213,8 @@ export default defineEventHandler(async (event) => {
         }),
       )
     },
-    onFinish: async ({ messages }) => {
-      await db
-        .insert(schema.messages)
-        .values(
-          messages.map((message) => ({
-            id: message.id,
-            chatId: chat.id,
-            role: message.role as "user" | "assistant",
-            parts: message.parts,
-          })),
-        )
-        .onConflictDoNothing()
+    onFinish: async ({ messages: finishedMessages }) => {
+      await persistMessages(chat.id, finishedMessages)
     },
   })
 

@@ -3,15 +3,19 @@ import { db, schema } from "hub:db"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 
-export default defineEventHandler(async (event) => {
-  const { user } = await requireUserSession(event)
+const sessionUserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+})
 
-  const { chatId } = await getValidatedRouterParams(
-    event,
-    z.object({
-      chatId: z.string(),
-    }).parse,
-  )
+export default defineEventHandler(async (event) => {
+  const session: unknown = await requireUserSession(event)
+  const { user } = z.object({ user: sessionUserSchema }).parse(session)
+
+  const paramsSchema = z.object({
+    chatId: z.string(),
+  })
+  const { chatId } = await getValidatedRouterParams(event, (data) => paramsSchema.parse(data))
 
   const userId = user.id
 
