@@ -1,10 +1,10 @@
-import { MODELS } from "#shared/utils/models"
+import { DEFAULT_MODEL, MODEL_OPTIONS } from "#shared/utils/models"
 
 export function useModels() {
-  const model = useCookie<string>("model", { default: () => "anthropic/claude-haiku-4.5" })
+  const model = useCookie<string>("model", { default: () => DEFAULT_MODEL })
 
   return {
-    models: MODELS,
+    models: MODEL_OPTIONS,
     model,
   }
 }
