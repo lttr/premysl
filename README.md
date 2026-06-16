@@ -75,10 +75,10 @@ external blob service or token is required.
 
 ## Development
 
-Start the dev server on `http://localhost:3000`:
+Start the dev server on `http://localhost:5040`:
 
 ```bash
-pnpm dev
+vp dev
 ```
 
 ## Verify
