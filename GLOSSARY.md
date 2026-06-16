@@ -56,6 +56,21 @@ linked repository answers "which repositories are in scope for retrieval",
 distinct from the **GitHub connection** that makes retrieval possible at all.
 _Avoid_: associated repository, connected repository, repo source
 
+## Retrieval
+
+**Snapshot**:
+The local copy of a **linked repository**'s files, downloaded as a repository
+archive at a point in time, that the assistant searches during retrieval. A
+snapshot is a frozen materialization, not a live view: its contents change only
+when the owner **refreshes** it.
+_Avoid_: cache, clone, mirror, index
+
+**Refresh**:
+The owner-initiated re-download that replaces a **linked repository**'s
+**snapshot** with its current GitHub contents. Manual and on-demand only; there
+is no automatic, scheduled, or webhook-driven refresh.
+_Avoid_: sync, pull, update, reindex
+
 ## Example dialogue
 
 > **Dev:** I ran it locally and never logged in, but my chats still saved. Whose
