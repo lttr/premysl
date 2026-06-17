@@ -7,7 +7,6 @@ export default defineNuxtConfig({
     "@nuxthub/core",
     "nuxt-auth-utils",
     "nuxt-charts",
-    "nuxt-csurf",
   ],
 
   devtools: {

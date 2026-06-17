@@ -8,21 +8,6 @@ interface ChatListItem {
   createdAt: string | Date
 }
 
-interface CsrfHeader {
-  name: string
-  value: string
-}
-
-function asString(value: unknown): string {
-  return typeof value === "string" ? value : ""
-}
-
-// nuxt-csurf types `csrf`/`headerName` as `any`; expose strictly-typed strings.
-function useCsrfHeader(): CsrfHeader {
-  const result: { csrf: unknown; headerName: unknown } = useCsrf()
-  return { name: asString(result.headerName), value: asString(result.csrf) }
-}
-
 // Modal `instance.result` resolves to an unresolved (`error`) type under the
 // lint tsconfig; funnel it through `unknown` before narrowing.
 async function awaitModalResult(instance: { result: unknown }): Promise<unknown> {
@@ -30,7 +15,7 @@ async function awaitModalResult(instance: { result: unknown }): Promise<unknown>
 }
 
 async function renameChat(
-  deps: { renameModal: ReturnType<ReturnType<typeof useOverlay>["create"]>; csrf: CsrfHeader },
+  deps: { renameModal: ReturnType<ReturnType<typeof useOverlay>["create"]> },
   toast: ReturnType<typeof useToast>,
   id: string,
   currentTitle?: string | null,
@@ -44,7 +29,6 @@ async function renameChat(
   try {
     await $fetch(`/api/chats/${id}/title`, {
       method: "PATCH",
-      headers: { [deps.csrf.name]: deps.csrf.value },
       body: { title: result },
     })
 
@@ -79,7 +63,6 @@ async function renameChat(
 async function deleteChat(
   deps: {
     deleteModal: ReturnType<ReturnType<typeof useOverlay>["create"]>
-    csrf: CsrfHeader
     route: ReturnType<typeof useRoute>
   },
   toast: ReturnType<typeof useToast>,
@@ -93,7 +76,6 @@ async function deleteChat(
   try {
     await $fetch(`/api/chats/${id}`, {
       method: "DELETE",
-      headers: { [deps.csrf.name]: deps.csrf.value },
     })
 
     toast.add({
@@ -130,7 +112,6 @@ export function useChatActions(): {
   const route = useRoute()
   const toast = useToast()
   const overlay = useOverlay()
-  const csrf = useCsrfHeader()
 
   const renameModal = overlay.create(LazyModalRename)
   const deleteModal = overlay.create(LazyModalConfirm, {
@@ -142,8 +123,7 @@ export function useChatActions(): {
   })
 
   return {
-    renameChat: async (id, currentTitle) =>
-      renameChat({ renameModal, csrf }, toast, id, currentTitle),
-    deleteChat: async (id) => deleteChat({ deleteModal, csrf, route }, toast, id),
+    renameChat: async (id, currentTitle) => renameChat({ renameModal }, toast, id, currentTitle),
+    deleteChat: async (id) => deleteChat({ deleteModal, route }, toast, id),
   }
 }

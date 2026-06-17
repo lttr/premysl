@@ -9,16 +9,6 @@ function createObjectUrl(file: File): string {
   return URL.createObjectURL(file)
 }
 
-function asString(value: unknown): string {
-  return typeof value === "string" ? value : ""
-}
-
-// nuxt-csurf types `csrf`/`headerName` as `any`; expose strictly-typed strings.
-function useCsrfHeader(): { name: string; value: string } {
-  const result: { csrf: unknown; headerName: unknown } = useCsrf()
-  return { name: asString(result.headerName), value: asString(result.csrf) }
-}
-
 // Read the auth-utils `loggedIn` ref as a plain boolean getter.
 // `useUserSession()` resolves to an unresolved (`error`) type under the lint
 // tsconfig, so funnel it through `unknown` before narrowing.
@@ -130,10 +120,7 @@ function createUploadRunner(
 }
 
 // Revokes the preview URL, drops the entry, and deletes the blob if uploaded.
-function createFileRemover(
-  files: Ref<FileWithStatus[]>,
-  csrfToken: { name: string; value: string },
-): (id: string) => void {
+function createFileRemover(files: Ref<FileWithStatus[]>): (id: string) => void {
   return function removeFile(id: string): void {
     const file = files.value.find((f) => f.id === id)
     if (!file) return
@@ -151,7 +138,6 @@ function createFileRemover(
       const deleteUrl: string = `/api/upload/${file.uploadedPathname}`
       $fetch(deleteUrl, {
         method: "DELETE",
-        headers: { [csrfToken.name]: csrfToken.value },
       }).catch((error: unknown) => {
         console.error("Failed to delete file from blob:", error)
       })
@@ -163,11 +149,9 @@ export function useFileUploadWithStatus(chatId: string): UseFileUploadWithStatus
   const files = ref<FileWithStatus[]>([])
   const toast = useToast()
   const isLoggedIn = useLoggedIn()
-  const csrfToken = useCsrfHeader()
 
   const upload: UploadFn = useUpload(`/api/upload/${chatId}`, {
     method: "PUT",
-    headers: { [csrfToken.name]: csrfToken.value },
   })
 
   const uploadOne = createUploadRunner(files, upload, toast)
@@ -209,7 +193,7 @@ export function useFileUploadWithStatus(chatId: string): UseFileUploadWithStatus
       })),
   )
 
-  const removeFile = createFileRemover(files, csrfToken)
+  const removeFile = createFileRemover(files)
 
   function clearFiles(): void {
     if (files.value.length === 0) return

@@ -81,9 +81,6 @@ importers:
       nuxt-charts:
         specifier: ^2.1.4
         version: 2.1.4(vue@3.5.33(typescript@6.0.3))
-      nuxt-csurf:
-        specifier: ^1.6.5
-        version: 1.6.5(magicast@0.5.2)
       shiki:
         specifier: ^4.0.2
         version: 4.0.2
@@ -6025,9 +6022,6 @@ packages:
   nuxt-charts@2.1.4:
     resolution: {integrity: sha512-uoTj+2zWc8ctAGNJw5buHobw/EGMM0qZw/Js+cySX8/3B6R6hwJ47KgeMQJt3LPSaQ2i4H7x8DmJPPSdUFhdJQ==}
 
-  nuxt-csurf@1.6.5:
-    resolution: {integrity: sha512-/DMNTON8LIVhntamKbBmAuM879B0QnuSJa7ZAkmkZe+21m+1QGcjVUxtSkizaM48NUvkuAGYOG0ncn+kqEgrzw==}
-
   nuxt@4.4.5:
     resolution: {integrity: sha512-MwTf3wyaEIm1U9/T1VKpqg7rGhhrn5Cx2ZS40lwo8GxsiY9xE7UOj5Cg0eAI0fSbJzyXlzdxspytgqWsgL+nIA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -7133,9 +7127,6 @@ packages:
 
   uncrypto@0.1.3:
     resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
-
-  uncsrf@1.2.0:
-    resolution: {integrity: sha512-EyeG1tIx1zisLuqokSXZ5LhndzaUd2WBMS+18IlBUYobJsKSUQMpLIEm6QUfY/Azmhnnz0v2QbkrT6/u2K/Y1g==}
 
   unctx@2.5.0:
     resolution: {integrity: sha512-p+Rz9x0R7X+CYDkT+Xg8/GhpcShTlU8n+cf9OtOEf7zEQsNcCZO1dPKNRDqvUTaq+P32PMMkxWHwfrxkqfqAYg==}
@@ -13446,14 +13437,6 @@ snapshots:
       - supports-color
       - vue
 
-  nuxt-csurf@1.6.5(magicast@0.5.2):
-    dependencies:
-      '@nuxt/kit': 3.21.2(magicast@0.5.2)
-      defu: 6.1.7
-      uncsrf: 1.2.0
-    transitivePeerDependencies:
-      - magicast
-
   nuxt@4.4.5(506bc1515ba2a17a2465bf1b5271942a):
     dependencies:
       '@dxup/nuxt': 0.4.1(magicast@0.5.2)(typescript@6.0.3)
@@ -14818,8 +14801,6 @@ snapshots:
       quansync: 1.0.0
 
   uncrypto@0.1.3: {}
-
-  uncsrf@1.2.0: {}
 
   unctx@2.5.0:
     dependencies:

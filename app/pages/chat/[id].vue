@@ -6,7 +6,6 @@ import type { UIMessage } from "ai"
 const route = useRoute()
 const toast = useToast()
 const { model } = useModels()
-const { csrf, headerName } = useCsrf()
 
 const { data } = await useFetch(`/api/chats/${route.params.id}`, {
   key: `chat-${route.params.id}`,
@@ -38,7 +37,6 @@ const chat = new Chat({
   messages: data.value?.messages,
   transport: new DefaultChatTransport({
     api: `/api/chats/${data.value?.id}`,
-    headers: { [headerName]: csrf },
     body: {
       model: model.value,
     },
@@ -99,7 +97,6 @@ async function saveEdit(message: UIMessage, text: string) {
   try {
     await $fetch(`/api/chats/${chatId}/messages`, {
       method: "DELETE",
-      headers: { [headerName]: csrf },
       body: { messageId: message.id, type: "edit" },
     })
   } catch {
@@ -121,7 +118,6 @@ async function regenerateMessage(message: UIMessage) {
   try {
     await $fetch(`/api/chats/${chatId}/messages`, {
       method: "DELETE",
-      headers: { [headerName]: csrf },
       body: { messageId: message.id, type: "regenerate" },
     })
   } catch {
@@ -164,7 +160,6 @@ async function vote(message: UIMessage, isUpvoted: boolean) {
   try {
     await $fetch(`/api/chats/${chatId}/votes`, {
       method: "POST",
-      headers: { [headerName]: csrf },
       body: next === null ? { messageId: message.id } : { messageId: message.id, isUpvoted: next },
     })
   } catch {

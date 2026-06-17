@@ -9,13 +9,6 @@ interface Deps {
   unlinkModal: ReturnType<ReturnType<typeof useOverlay>["create"]>
 }
 
-function csrfHeader(): Record<string, string> {
-  const result: { csrf: unknown; headerName: unknown } = useCsrf()
-  const name = typeof result.headerName === "string" ? result.headerName : ""
-  const value = typeof result.csrf === "string" ? result.csrf : ""
-  return name === "" ? {} : { [name]: value }
-}
-
 // Toggle a key in a reactive Set, copy-on-write so reactivity fires.
 function setBusy(state: Ref<Set<string>>, key: string, busy: boolean): void {
   const next = new Set(state.value)
@@ -40,7 +33,6 @@ async function linkRepo(deps: Deps, fullName: string): Promise<void> {
   try {
     const row = await $fetch<LinkedRepo>("/api/repos/linked", {
       method: "POST",
-      headers: csrfHeader(),
       body: { fullName },
     })
     deps.data.value = [row, ...deps.data.value]
@@ -56,7 +48,7 @@ async function unlinkRepo(deps: Deps, id: string): Promise<void> {
   const confirmed = (await awaitModalResult(deps.unlinkModal.open())) === true
   if (!confirmed) return
   try {
-    await $fetch(`/api/repos/linked/${id}`, { method: "DELETE", headers: csrfHeader() })
+    await $fetch(`/api/repos/linked/${id}`, { method: "DELETE" })
     deps.data.value = deps.data.value.filter((r) => r.id !== id)
     deps.toast.add({ title: "Repository unlinked", icon: "i-lucide-unlink" })
   } catch {
@@ -70,7 +62,6 @@ async function refreshRepo(deps: Deps, id: string): Promise<void> {
   try {
     const row = await $fetch<LinkedRepo>(`/api/repos/linked/${id}/refresh`, {
       method: "POST",
-      headers: csrfHeader(),
     })
     deps.data.value = deps.data.value.map((r) => (r.id === id ? row : r))
     deps.toast.add({ title: "Snapshot refreshed", icon: "i-lucide-refresh-cw" })
