@@ -6,7 +6,7 @@ const { retrievalMode, retrievalModes } = useRetrievalMode()
 </script>
 
 <template>
-  <UButtonGroup size="sm">
+  <UFieldGroup size="sm">
     <UButton
       v-for="opt in retrievalModes"
       :key="opt.value"
@@ -18,5 +18,5 @@ const { retrievalMode, retrievalModes } = useRetrievalMode()
       <RetrievalDot :mode="opt.value" />
       {{ opt.label }}
     </UButton>
-  </UButtonGroup>
+  </UFieldGroup>
 </template>
