@@ -3,7 +3,8 @@
 To let the assistant retrieve from a **linked repository**, phase 1 downloads the
 repo as a tarball (`GET /repos/{owner}/{repo}/tarball/{ref}`) into an on-disk
 **snapshot** and serves the search tool by running `ripgrep` over that snapshot,
-returning the enclosing markdown section (or the whole file when small). GitHub's
+returning the whole file when small or a line window around the match otherwise
+(markdown-section-aware extraction is a later refinement). GitHub's
 only "search inside a repo" API is code search (`GET /search/code`), which is too
 limiting for a docs repo: default branch only, files under 384 KB, ~9 requests
 per minute, and weak keyword matching over prose. Downloading the content and
