@@ -6,7 +6,7 @@ Premysl: Lukas's single-tenant, self-hosted AI chat assistant. Nuxt 4, Nitro, Dr
 
 Use `vp` (Vite+), not pnpm/npm.
 
-- `vp dev` — dev server on :5040
+- `vp run dev` — dev server on :5040
 - `vp run verify` — pre-push gate: `vp check` → `eslint .` → `nuxt typecheck` → `fallow dead-code` → `nuxt build`. Run before pushing. No unit tests.
 - `vp run db:generate` / `vp run db:migrate` — Drizzle migrations. Never hand-edit applied migrations.
 
