@@ -7,6 +7,7 @@ import {
   smoothStream,
   stepCountIs,
   streamText,
+  tool,
 } from "ai"
 import { db, schema } from "hub:db"
 import { and, eq } from "drizzle-orm"
@@ -46,10 +47,19 @@ async function persistMessages(chatId: string, messages: UIMessage[]): Promise<v
 // Build the tool set for a request, gating provider-defined web-search tools by
 // provider. `provider` is widened to string so future providers (openai/google)
 // can be enabled in MODELS without tripping literal-narrowing comparisons.
-function buildTools(provider: string | null) {
+//
+// Per-request (not a static object) so the retrieval tool can close over the
+// authenticated user id and search only that user's linked snapshots (ADR 0001).
+function buildTools(provider: string | null, userId: string) {
   return {
     chart: chartTool,
     weather: weatherTool,
+    repo_search: tool({
+      description: REPO_SEARCH_DESCRIPTION,
+      inputSchema: repoSearchInputSchema,
+      outputSchema: repoSearchOutputSchema,
+      execute: async ({ query }) => searchLinkedRepos(userId, query),
+    }),
     ...(provider === "anthropic" && {
       web_search: anthropic.tools.webSearch_20250305(),
     }),
@@ -127,6 +137,13 @@ function buildSystemPrompt(username: string | undefined): string {
   * Instead of "# Complete Guide", write "**Complete Guide**" or start directly with content
 - Start all responses with content, never with a heading
 
+**LINKED REPOSITORIES:**
+- You can search the owner's linked GitHub repositories (their docs and notes) with the repo_search tool
+- Use it when the question is about the owner's own projects, notes, or documentation
+- It takes only a free-text query and searches all linked repositories at once
+- Ground your answer in the returned snippets and cite the repository and file path you used
+- If it returns no matches, say so plainly so the owner can rephrase or link another repository
+
 **WEB SEARCH:**
 - You have access to a web search tool to find current, up-to-date information
 - Only use it when the user explicitly asks about recent events, real-time data, or current facts
@@ -186,7 +203,7 @@ export default defineEventHandler(async (event) => {
         model: resolveModel(model),
         system: buildSystemPrompt(username),
         messages: await convertToModelMessages(messages),
-        tools: buildTools(provider),
+        tools: buildTools(provider, userId),
         providerOptions: PROVIDER_OPTIONS,
         stopWhen: stepCountIs(5),
         experimental_transform: smoothStream(),

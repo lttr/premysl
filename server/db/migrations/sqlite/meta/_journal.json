@@ -22,6 +22,13 @@
       "when": 1775142810661,
       "tag": "0002_eager_gorilla_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1781679296674,
+      "tag": "0003_spotty_dorian_gray",
+      "breakpoints": true
     }
   ]
 }

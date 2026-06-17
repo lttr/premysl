@@ -26,6 +26,7 @@ export const users = sqliteTable(
 
 export const usersRelations = relations(users, ({ many }) => ({
   chats: many(chats),
+  linkedRepositories: many(linkedRepositories),
 }))
 
 export const chats = sqliteTable(
@@ -72,6 +73,41 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   chat: one(chats, {
     fields: [messages.chatId],
     references: [chats.id],
+  }),
+}))
+
+export const linkedRepositories = sqliteTable(
+  "linked_repositories",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // owner/name — the GitHub identity; keys both this record and the snapshot.
+    fullName: text("full_name").notNull(),
+    // The branch the snapshot tracks (branch selection is out of scope).
+    defaultBranch: text("default_branch").notNull(),
+    // On-disk snapshot location under .data/repos/.
+    snapshotPath: text("snapshot_path").notNull(),
+    // The commit the snapshot was taken at — powers commit-pinned source links.
+    commitSha: text("commit_sha").notNull(),
+    lastRefreshedAt: integer("last_refreshed_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    ...timestamps,
+  },
+  (table) => [
+    index("linked_repositories_user_id_idx").on(table.userId),
+    uniqueIndex("linked_repositories_user_full_name_idx").on(table.userId, table.fullName),
+  ],
+)
+
+export const linkedRepositoriesRelations = relations(linkedRepositories, ({ one }) => ({
+  user: one(users, {
+    fields: [linkedRepositories.userId],
+    references: [users.id],
   }),
 }))
 

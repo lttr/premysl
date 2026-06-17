@@ -16,7 +16,16 @@ const sessionSchema = z.object({
 })
 
 export default defineOAuthGitHubEventHandler({
-  async onSuccess(event: H3Event, { user: ghUser }: { user: GitHubUser }) {
+  // Extend the login to consent to `repo` scope (ADR 0001). There is no separate
+  // "connect GitHub" flow — the access token captured here is the GitHub
+  // connection used to list and snapshot linked repositories.
+  config: {
+    scope: ["repo"],
+  },
+  async onSuccess(
+    event: H3Event,
+    { user: ghUser, tokens }: { user: GitHubUser; tokens: { access_token: string } },
+  ) {
     const config = useRuntimeConfig(event)
 
     // In locked mode, only the owner may obtain a session. Fail closed (no
@@ -56,7 +65,9 @@ export default defineOAuthGitHubEventHandler({
       .set({ userId: user.id })
       .where(eq(schema.chats.userId, LOCAL_USER_ID))
 
-    await setUserSession(event, { user })
+    // Store the access token in the session's server-only `secure` field: it is
+    // never serialized to the client and never written to the database (ADR 0001).
+    await setUserSession(event, { user, secure: { githubToken: tokens.access_token } })
 
     return sendRedirect(event, "/")
   },

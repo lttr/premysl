@@ -205,6 +205,14 @@ export default defineConfig({
           "no-await-in-loop": "off",
         },
       },
+      {
+        // Paginating the repo list and streaming tar entries are inherently
+        // sequential — each iteration depends on the previous one finishing.
+        files: ["server/utils/github.ts"],
+        rules: {
+          "no-await-in-loop": "off",
+        },
+      },
     ],
   },
   fmt: {

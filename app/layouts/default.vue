@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from "@nuxt/ui"
+import { formatDistanceToNow } from "date-fns"
+import { LazyRepoPicker } from "#components"
 
 const { loggedIn, openInPopup } = useUserSession()
 const {
@@ -39,6 +41,14 @@ watch(loggedIn, () => {
 })
 
 const { groups } = useChats(chats)
+
+const overlay = useOverlay()
+const repoPicker = overlay.create(LazyRepoPicker)
+const { repos: linkedRepos, refreshing, unlinkRepo, refreshRepo } = useLinkedRepos()
+
+function repoFreshness(date: string): string {
+  return formatDistanceToNow(new Date(date), { addSuffix: true })
+}
 
 const items = computed(() => {
   const groupsValue = groups.value
@@ -177,6 +187,58 @@ defineShortcuts({
             </UDropdownMenu>
           </template>
         </UNavigationMenu>
+
+        <div v-if="!collapsed" class="mt-4">
+          <div class="flex items-center justify-between ps-2.5 pe-1 mb-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-dimmed">
+              Linked repositories
+            </span>
+            <UButton
+              icon="i-lucide-plus"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              aria-label="Link a repository"
+              @click="repoPicker.open()"
+            />
+          </div>
+
+          <div
+            v-for="repo in linkedRepos"
+            :key="repo.id"
+            class="group flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-accented/50"
+          >
+            <UIcon name="i-simple-icons-github" class="size-4 text-dimmed shrink-0" />
+            <div class="min-w-0 flex-1">
+              <div class="text-sm truncate leading-tight">{{ repo.fullName }}</div>
+              <div class="text-xs text-dimmed truncate">
+                refreshed {{ repoFreshness(repo.lastRefreshedAt) }}
+              </div>
+            </div>
+            <div
+              class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            >
+              <UButton
+                :icon="refreshing.has(repo.id) ? 'i-lucide-loader-circle' : 'i-lucide-refresh-cw'"
+                :class="refreshing.has(repo.id) && 'animate-spin'"
+                :disabled="refreshing.has(repo.id)"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                aria-label="Refresh snapshot"
+                @click="refreshRepo(repo.id)"
+              />
+              <UButton
+                icon="i-lucide-x"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                aria-label="Unlink"
+                @click="unlinkRepo(repo.id)"
+              />
+            </div>
+          </div>
+        </div>
       </template>
 
       <template #footer="{ collapsed }">

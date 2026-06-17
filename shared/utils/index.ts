@@ -1,3 +1,5 @@
 export * from "./tools/weather"
 export * from "./tools/chart"
+export * from "./tools/repo-search"
+export * from "./repos"
 export * from "./file"
