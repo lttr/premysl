@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
   const id = crypto.randomUUID()
   const snapshotPath = snapshotPathFor(id)
-  await downloadAndExtractSnapshot({
+  const { relPaths } = await downloadAndExtractSnapshot({
     token,
     fullName,
     ref: defaultBranch,
@@ -35,18 +35,41 @@ export default defineEventHandler(async (event) => {
     commitDate,
   })
 
+  let row: typeof schema.linkedRepositories.$inferSelect | undefined
   try {
-    const [row] = await db
+    ;[row] = await db
       .insert(schema.linkedRepositories)
       .values({ id, userId, fullName, defaultBranch, snapshotPath, commitSha })
       .returning()
     if (!row) {
       throw createError({ statusCode: 500, statusMessage: "Failed to link repository" })
     }
-    return toLinkedRepo(row)
   } catch (error) {
     // Roll back the on-disk snapshot if the record could not be written.
     await deleteSnapshotDir(snapshotPath)
     throw error
   }
+
+  // Index for RAG within this request (ADR 0003). All-or-nothing: if embedding
+  // fails the repo is left unindexed (no half-index) but stays linked and
+  // grep-searchable; surface it so the owner can refresh to retry.
+  try {
+    await indexRepoChunks({
+      userId,
+      linkedRepositoryId: id,
+      repoFullName: fullName,
+      commitSha,
+      snapshotPath,
+      relPaths,
+    })
+  } catch (error) {
+    console.error("[link] RAG indexing failed:", error)
+    throw createError({
+      statusCode: 502,
+      statusMessage:
+        "Repository linked and searchable with grep, but RAG indexing failed. Refresh the repository to retry RAG indexing.",
+    })
+  }
+
+  return toLinkedRepo(row)
 })

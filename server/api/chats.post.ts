@@ -7,8 +7,13 @@ export default defineEventHandler(async (event) => {
   const bodySchema = z.object({
     id: z.string(),
     message: z.custom<UIMessage>(),
+    // Retrieval mode is chosen at creation and fixed for the chat's life
+    // (GLOSSARY). Optional for backward compatibility; defaults to grep.
+    retrievalMode: z.string().refine(isRetrievalMode).optional(),
   })
-  const { id, message } = await readValidatedBody(event, (body) => bodySchema.parse(body))
+  const { id, message, retrievalMode } = await readValidatedBody(event, (body) =>
+    bodySchema.parse(body),
+  )
 
   const [chat] = await db
     .insert(schema.chats)
@@ -16,6 +21,7 @@ export default defineEventHandler(async (event) => {
       id,
       title: "",
       userId,
+      ...(retrievalMode !== undefined && { retrievalMode }),
     })
     .returning()
 

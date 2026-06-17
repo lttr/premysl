@@ -38,7 +38,7 @@ const emit = defineEmits<{
         :invocation="{ ...(part as WeatherUIToolInvocation) }"
       />
       <ChatToolRepoSearch
-        v-else-if="getToolName(part) === 'repo_search'"
+        v-else-if="getToolName(part) === 'repo_search' || getToolName(part) === 'repo_rag'"
         :invocation="{ ...(part as RepoSearchUIToolInvocation) }"
       />
       <UChatTool

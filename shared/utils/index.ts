@@ -1,5 +1,7 @@
 export * from "./tools/weather"
 export * from "./tools/chart"
 export * from "./tools/repo-search"
+export * from "./tools/repo-rag"
+export * from "./retrieval-mode"
 export * from "./repos"
 export * from "./file"

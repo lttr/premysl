@@ -1,5 +1,24 @@
-import { sqliteTable, text, integer, index, uniqueIndex, primaryKey } from "drizzle-orm/sqlite-core"
+import {
+  sqliteTable,
+  text,
+  integer,
+  index,
+  uniqueIndex,
+  primaryKey,
+  customType,
+} from "drizzle-orm/sqlite-core"
 import { relations } from "drizzle-orm"
+
+// libSQL-native 32-bit float vector column (`F32_BLOB(n)`). Declared so
+// `nuxt db generate` emits the right DDL; values are written/read with raw SQL
+// (`vector32(?)` / `vector_distance_cos(...)`) since the typed builder can't
+// express those functions (ADR 0003).
+const float32Vector = (dimensions: number) =>
+  customType<{ data: number[]; driverData: Buffer }>({
+    dataType() {
+      return `F32_BLOB(${dimensions})`
+    },
+  })
 
 const timestamps = {
   createdAt: integer("created_at", { mode: "timestamp" })
@@ -40,6 +59,12 @@ export const chats = sqliteTable(
     visibility: text("visibility", { enum: ["public", "private"] })
       .notNull()
       .default("private"),
+    // Which retrieval method this chat uses, fixed for its life (GLOSSARY:
+    // retrieval mode). Orthogonal to the model key. Defaults to the established
+    // grep method; rag is opt-in for evaluation.
+    retrievalMode: text("retrieval_mode", { enum: ["grep", "rag"] })
+      .notNull()
+      .default("grep"),
     ...timestamps,
   },
   (table) => [index("chats_user_id_idx").on(table.userId)],
@@ -104,10 +129,59 @@ export const linkedRepositories = sqliteTable(
   ],
 )
 
-export const linkedRepositoriesRelations = relations(linkedRepositories, ({ one }) => ({
+export const linkedRepositoriesRelations = relations(linkedRepositories, ({ one, many }) => ({
   user: one(users, {
     fields: [linkedRepositories.userId],
     references: [users.id],
+  }),
+  chunks: many(repoChunks),
+}))
+
+// One retrievable passage of a linked repository's snapshot, for RAG retrieval
+// (ADR 0003). Provenance is denormalized so a search builds the commit-pinned
+// citation URL without a join. The vector is the chunk's Voyage embedding;
+// BM25 lexical scoring lives in the companion `repo_chunks_fts` FTS5 table
+// (created in a hand-written migration). Rebuilt wholesale on link/refresh.
+export const repoChunks = sqliteTable(
+  "repo_chunks",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    linkedRepositoryId: text("linked_repository_id")
+      .notNull()
+      .references(() => linkedRepositories.id, { onDelete: "cascade" }),
+    // owner/name of the source repository — the citation's `repo`.
+    repoFullName: text("repo_full_name").notNull(),
+    // Commit the snapshot was taken at — pins the citation URL.
+    commitSha: text("commit_sha").notNull(),
+    // Path of the file inside the repository (forward-slash, snapshot-relative).
+    filePath: text("file_path").notNull(),
+    startLine: integer("start_line").notNull(),
+    endLine: integer("end_line").notNull(),
+    // The passage shown to the model; also the FTS5 lexical content.
+    content: text("content").notNull(),
+    // ISO 8601 last-changed date of the source file, copied from the snapshot's
+    // dates manifest at index time so search needs no manifest read (matches the
+    // grep snippet's `lastChanged`). Absent when the manifest had no entry.
+    lastChanged: text("last_changed"),
+    // Voyage `voyage-context-3` embedding (1024 dims).
+    embedding: float32Vector(1024)("embedding").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("repo_chunks_user_id_idx").on(table.userId),
+    index("repo_chunks_linked_repository_id_idx").on(table.linkedRepositoryId),
+  ],
+)
+
+export const repoChunksRelations = relations(repoChunks, ({ one }) => ({
+  linkedRepository: one(linkedRepositories, {
+    fields: [repoChunks.linkedRepositoryId],
+    references: [linkedRepositories.id],
   }),
 }))
 

@@ -21,6 +21,7 @@ const { data: chats, refresh: refreshChats } = await useFetch("/api/chats", {
       to: `/chat/${chat.id}`,
       icon: "i-lucide-message-circle",
       createdAt: chat.createdAt,
+      retrievalMode: chat.retrievalMode,
     })),
 })
 
@@ -168,6 +169,9 @@ defineShortcuts({
               'translate-x-full group-hover:translate-x-0 group-has-data-[state=open]:translate-x-0 transition-transform ms-0 absolute inset-e-px',
           }"
         >
+          <template #chat-leading="{ item }">
+            <RetrievalDot :mode="(item as { retrievalMode: RetrievalMode }).retrievalMode" />
+          </template>
           <template #chat-trailing="{ item }">
             <UDropdownMenu
               :items="getChatActions(item as { id: string; label: string })"

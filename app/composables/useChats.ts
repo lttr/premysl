@@ -1,10 +1,12 @@
 import { isToday, isYesterday, subMonths } from "date-fns"
+import type { RetrievalMode } from "#shared/utils/retrieval-mode"
 
 export interface UIChat {
   id: string
   label: string
   icon: string
   createdAt: string
+  retrievalMode: RetrievalMode
 }
 
 export interface ChatGroup {

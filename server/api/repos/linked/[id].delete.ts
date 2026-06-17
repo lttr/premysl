@@ -18,6 +18,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Linked repository not found" })
   }
 
+  // Remove the RAG chunk rows and their FTS entries before the repo row so
+  // nothing is left behind (the FTS table is standalone, not FK-cascaded).
+  await deleteRepoChunks(id)
   await db
     .delete(schema.linkedRepositories)
     .where(and(eq(schema.linkedRepositories.id, id), eq(schema.linkedRepositories.userId, userId)))

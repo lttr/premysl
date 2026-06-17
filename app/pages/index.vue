@@ -4,6 +4,7 @@ const loading = ref(false)
 const chatId = crypto.randomUUID()
 
 const { user } = useUserSession()
+const { retrievalMode } = useRetrievalMode()
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -35,6 +36,7 @@ async function createChat(prompt: string) {
     method: "POST",
     body: {
       id: chatId,
+      retrievalMode: retrievalMode.value,
       message: {
         role: "user",
         parts,
@@ -112,8 +114,10 @@ const quickChats = [
             </template>
 
             <template #footer>
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-1.5">
                 <ChatFileUploadButton :open="open" />
+
+                <RetrievalSelect />
 
                 <ModelSelect />
               </div>

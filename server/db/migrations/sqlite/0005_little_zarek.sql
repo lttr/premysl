@@ -1,0 +1,1 @@
+ALTER TABLE `repo_chunks` ADD `last_changed` text;

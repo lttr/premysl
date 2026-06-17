@@ -21,13 +21,34 @@ export default defineEventHandler(async (event) => {
   }
 
   const { defaultBranch, commitSha, commitDate } = await getRepoMeta(token, row.fullName)
-  await downloadAndExtractSnapshot({
+  const { relPaths } = await downloadAndExtractSnapshot({
     token,
     fullName: row.fullName,
     ref: defaultBranch,
     destDir: row.snapshotPath,
     commitDate,
   })
+
+  // Rebuild the RAG index from the new snapshot so RAG is as fresh as grep
+  // (ADR 0003). All-or-nothing: if embedding fails the prior index survives,
+  // so it is never left half-rebuilt — surface it and the owner can retry.
+  try {
+    await indexRepoChunks({
+      userId,
+      linkedRepositoryId: id,
+      repoFullName: row.fullName,
+      commitSha,
+      snapshotPath: row.snapshotPath,
+      relPaths,
+    })
+  } catch (error) {
+    console.error("[refresh] RAG re-indexing failed:", error)
+    throw createError({
+      statusCode: 502,
+      statusMessage:
+        "Snapshot refreshed for grep, but RAG re-indexing failed. Try refreshing again.",
+    })
+  }
 
   const [updated] = await db
     .update(schema.linkedRepositories)

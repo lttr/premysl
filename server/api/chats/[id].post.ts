@@ -50,16 +50,29 @@ async function persistMessages(chatId: string, messages: UIMessage[]): Promise<v
 //
 // Per-request (not a static object) so the retrieval tool can close over the
 // authenticated user id and search only that user's linked snapshots (ADR 0001).
-function buildTools(provider: string | null, userId: string) {
+//
+// The chat's retrieval mode decides which single retrieval tool is exposed:
+// grep (repo_search) or RAG (repo_rag). The model only ever sees its chat's one
+// tool, so it cannot mix methods and every answer is attributable to one method.
+function buildTools(provider: string | null, userId: string, retrievalMode: RetrievalMode) {
+  const retrievalTool =
+    retrievalMode === "rag"
+      ? tool({
+          description: REPO_RAG_DESCRIPTION,
+          inputSchema: repoSearchInputSchema,
+          outputSchema: repoSearchOutputSchema,
+          execute: async ({ query }) => searchRagChunks(userId, query),
+        })
+      : tool({
+          description: REPO_SEARCH_DESCRIPTION,
+          inputSchema: repoSearchInputSchema,
+          outputSchema: repoSearchOutputSchema,
+          execute: async ({ query }) => searchLinkedRepos(userId, query),
+        })
   return {
     chart: chartTool,
     weather: weatherTool,
-    repo_search: tool({
-      description: REPO_SEARCH_DESCRIPTION,
-      inputSchema: repoSearchInputSchema,
-      outputSchema: repoSearchOutputSchema,
-      execute: async ({ query }) => searchLinkedRepos(userId, query),
-    }),
+    [retrievalMode === "rag" ? "repo_rag" : "repo_search"]: retrievalTool,
     ...(provider === "anthropic" && {
       web_search: anthropic.tools.webSearch_20250305(),
     }),
@@ -123,9 +136,14 @@ async function saveLastUserMessage(chatId: string, messages: UIMessage[]): Promi
     .onConflictDoUpdate({ target: schema.messages.id, set: { parts: lastMessage.parts } })
 }
 
-function buildSystemPrompt(username: string | undefined): string {
+function buildSystemPrompt(username: string | undefined, retrievalMode: RetrievalMode): string {
   const namePart =
     username !== undefined && username !== "" ? `The user's name is ${username}.` : ""
+  const retrievalTool = retrievalMode === "rag" ? "repo_rag" : "repo_search"
+  const retrievalHow =
+    retrievalMode === "rag"
+      ? "It matches passages by meaning and keywords, so it finds relevant docs even when they word things differently from the question."
+      : "It matches the question's keywords across the files."
   return `You are a knowledgeable and helpful AI assistant. ${namePart} Your goal is to provide clear, accurate, and well-structured responses.
 
 **FORMATTING RULES (CRITICAL):**
@@ -138,7 +156,8 @@ function buildSystemPrompt(username: string | undefined): string {
 - Start all responses with content, never with a heading
 
 **LINKED REPOSITORIES:**
-- You can search the owner's linked GitHub repositories (their docs and notes) with the repo_search tool
+- You can search the owner's linked GitHub repositories (their docs and notes) with the ${retrievalTool} tool
+- ${retrievalHow}
 - Use it when the question is about the owner's own projects, notes, or documentation
 - It takes only a free-text query and searches all linked repositories at once
 - Ground your answer in the returned snippets and cite the repository and file path you used
@@ -201,9 +220,9 @@ export default defineEventHandler(async (event) => {
       const result = streamText({
         abortSignal: abortController.signal,
         model: resolveModel(model),
-        system: buildSystemPrompt(username),
+        system: buildSystemPrompt(username, chat.retrievalMode),
         messages: await convertToModelMessages(messages),
-        tools: buildTools(provider, userId),
+        tools: buildTools(provider, userId, chat.retrievalMode),
         providerOptions: PROVIDER_OPTIONS,
         stopWhen: stepCountIs(5),
         experimental_transform: smoothStream(),

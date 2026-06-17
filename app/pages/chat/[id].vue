@@ -277,8 +277,10 @@ onMounted(() => {
             </template>
 
             <template #footer>
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-1.5">
                 <ChatFileUploadButton :open="open" />
+
+                <RetrievalBadge v-if="data?.retrievalMode" :mode="data.retrievalMode" />
 
                 <ModelSelect />
               </div>

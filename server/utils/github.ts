@@ -346,7 +346,7 @@ async function extractMarkdown(tarball: Buffer, destDir: string): Promise<string
 // any prior snapshot wholesale (refresh semantics).
 export async function downloadAndExtractSnapshot(
   input: SnapshotInput,
-): Promise<{ fileCount: number }> {
+): Promise<{ fileCount: number; relPaths: string[] }> {
   const { token, fullName, ref, destDir } = input
   const response = await ghFetch(token, `/repos/${fullName}/tarball/${encodeURIComponent(ref)}`)
   const tarball = Buffer.from(await response.arrayBuffer())
@@ -355,7 +355,9 @@ export async function downloadAndExtractSnapshot(
   await mkdir(destDir, { recursive: true })
   const relPaths = await extractMarkdown(tarball, destDir)
   await writeDatesManifest(input, relPaths)
-  return { fileCount: relPaths.length }
+  // relPaths feed RAG indexing (ADR 0003); the markdown files are also left on
+  // disk for grep.
+  return { fileCount: relPaths.length, relPaths }
 }
 
 // Remove a snapshot directory from disk (unlink, or before a failed link rolls back).
