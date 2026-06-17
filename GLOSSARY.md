@@ -72,6 +72,28 @@ The owner-initiated re-download that replaces a **linked repository**'s
 is no automatic, scheduled, or webhook-driven refresh.
 _Avoid_: sync, pull, update, reindex
 
+**Grep retrieval**:
+The retrieval method that searches **snapshots** with ripgrep over the question's
+keywords and ranks files by match count, returning whole small files or a line
+window around each match. One of the two methods a chat may use, selected by its
+**retrieval mode**. Operates directly on the snapshot's files; needs no
+preparation beyond the snapshot itself.
+_Avoid_: text search, keyword search, lexical search
+
+**RAG retrieval**:
+The retrieval method that splits **snapshots** into chunks, ranks them against the
+question by combining semantic similarity (embeddings) with keyword scoring
+(BM25), and returns the best-matching chunks. The other method a chat may use,
+selected by its **retrieval mode**. Hybrid by design: it is not purely semantic,
+since the keyword half runs alongside the embedding half.
+_Avoid_: semantic search, vector search, embeddings search
+
+**Retrieval mode**:
+The per-chat choice of which retrieval method — **grep retrieval** or **RAG
+retrieval** — that chat uses. Fixed for the chat so every answer in it is
+attributable to one method, which is what makes the two methods comparable.
+_Avoid_: search mode, retrieval strategy, RAG toggle
+
 ## Example dialogue
 
 > **Dev:** I ran it locally and never logged in, but my chats still saved. Whose
