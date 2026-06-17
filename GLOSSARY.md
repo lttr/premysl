@@ -59,10 +59,11 @@ _Avoid_: associated repository, connected repository, repo source
 ## Retrieval
 
 **Snapshot**:
-The local copy of a **linked repository**'s files, downloaded as a repository
-archive at a point in time, that the assistant searches during retrieval. A
-snapshot is a frozen materialization, not a live view: its contents change only
-when the owner **refreshes** it.
+The local copy of a **linked repository**'s markdown files, extracted from a
+repository archive downloaded at a point in time, that the assistant searches
+during retrieval. The archive carries no git history, so the snapshot is shallow,
+and only markdown is kept on disk. A snapshot is a frozen materialization, not a
+live view: its contents change only when the owner **refreshes** it.
 _Avoid_: cache, clone, mirror, index
 
 **Refresh**:

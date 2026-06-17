@@ -128,19 +128,25 @@ refresh button to re-download its snapshot.
 - A new `linkedRepositories` table is added, following existing schema conventions
   (UUID primary key, `user_id` foreign key with cascade delete, integer timestamp
   columns). Columns: an id, the owning user id, the full name, the default branch,
-  the on-disk snapshot location, a last-refreshed timestamp, and a created-at
-  timestamp.
+  the on-disk snapshot location, the commit SHA the snapshot was taken at, a
+  last-refreshed timestamp, and a created-at timestamp. The commit SHA lets
+  retrieved snippets cite a commit-pinned GitHub URL that stays line-accurate
+  after later pushes.
 - The migration is generated with the project's Drizzle tooling; applied
   migrations are never hand-edited.
 
 ### Snapshots
 
 - A snapshot is created by downloading the repository archive (tarball) for the
-  repository's default branch via the GitHub API and extracting it into a plain
-  directory under the persistent `.data` volume (e.g. `.data/repos/<id>/`). This
-  volume is already mounted in production, so snapshots survive redeployment. The
-  on-disk layout is used because retrieval needs a real directory tree to search;
-  NuxtHub Blob is intentionally not used for snapshots (ADR 0002).
+  repository's default branch via the GitHub API and extracting **only its
+  markdown files** (`.md`/`.mdx`/`.markdown`) into a plain directory under the
+  persistent `.data` volume (e.g. `.data/repos/<id>/`). This volume is already
+  mounted in production, so snapshots survive redeployment. The tarball carries no
+  git history, so the snapshot is shallow; extraction streams through an in-process
+  Node library (gunzip plus a tar reader) so it needs no system `tar` binary and
+  works in the stock Node production image. The on-disk layout is used because
+  retrieval needs a real directory tree to search; NuxtHub Blob is intentionally
+  not used for snapshots (ADR 0002).
 - The initial snapshot is downloaded automatically when a repository is linked.
 - Refresh is owner-initiated and manual only: a refresh action re-downloads the
   archive and replaces the snapshot, updating the last-refreshed timestamp. There
@@ -155,11 +161,13 @@ refresh button to re-download its snapshot.
   the same style.
 - The tool's input is a single free-text query. It has no repository argument: it
   searches the snapshots of all of the owner's linked repositories.
-- Search is performed by running ripgrep over the snapshot directories. For each
-  match the tool returns the repository identity, the file path, the matched
-  location, and the relevant piece of the file: the whole file when it is under a
-  size cap, otherwise a window of lines around the match. Markdown-section-aware
-  extraction is deferred (see Out of Scope).
+- Search is performed by running ripgrep over the snapshot directories. ripgrep is
+  bundled with the app as a dependency (a prebuilt binary the tool spawns directly)
+  rather than assumed on the host, so search runs in the stock Node production
+  image, not only in dev. For each match the tool returns the repository identity,
+  the file path, the matched location, and the relevant piece of the file: the
+  whole file when it is under a size cap, otherwise a window of lines around the
+  match. Markdown-section-aware extraction is deferred (see Out of Scope).
 - `buildTools()` in the core chat endpoint becomes per-request so the retrieval
   tool can close over the authenticated user id (to resolve that user's linked
   repositories) and the session GitHub token. This is a change from the current
@@ -170,7 +178,8 @@ refresh button to re-download its snapshot.
 - A new tool-render component is added under the chat tool components directory and
   wired into the message content dispatch by tool name, in the same pattern as the
   existing chart and weather tools. It renders the retrieved snippets with their
-  repository and file-path provenance.
+  repository and file-path provenance, each linking to the source via a
+  commit-pinned GitHub URL built from the snapshot's recorded commit SHA.
 
 ## Testing Decisions
 
@@ -209,6 +218,8 @@ refresh button to re-download its snapshot.
   to all of the owner's chats.
 - Markdown-section-aware result extraction. Phase 1 returns whole small files or a
   line window; returning the enclosing markdown section is a later refinement.
+- Non-markdown files. Phase 1 extracts and searches only markdown
+  (`.md`/`.mdx`/`.markdown`); code, data, and other text are not snapshotted.
 - Indexing or searching files larger than what is reasonable to return as context;
   binary assets are not a retrieval target.
 

@@ -1,0 +1,2331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Linked Repository Retrieval — Visual Spec</title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --ink: #1c2024;
+        --muted: #6b7280;
+        --faint: #9aa3af;
+        --line: #e6e8eb;
+        --line-strong: #d3d7dd;
+        --accent: #16a34a;
+        --accent-soft: #dcfce7;
+        --blue: #2563eb;
+        --blue-soft: #dbeafe;
+        --amber: #d97706;
+        --amber-soft: #fef3c7;
+        --violet: #7c3aed;
+        --violet-soft: #ede9fe;
+        --rose: #e11d48;
+        --rose-soft: #ffe4e6;
+        --code-bg: #0f1419;
+        --radius: 14px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+        --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+        --sans:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.85em;
+        background: #eef0f3;
+        padding: 0.1em 0.4em;
+        border-radius: 5px;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 24px 120px;
+      }
+
+      /* ---- masthead ---- */
+      header.masthead {
+        background: linear-gradient(135deg, #0f1419 0%, #1c2430 60%, #11341f 100%);
+        color: #fff;
+        padding: 64px 24px 56px;
+        margin-bottom: 48px;
+      }
+      header.masthead .inner {
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #7ee2a8;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      header.masthead h1 {
+        font-size: 40px;
+        line-height: 1.1;
+        margin: 0 0 16px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      header.masthead p {
+        font-size: 17px;
+        color: #c7cdd6;
+        max-width: 720px;
+        margin: 0;
+      }
+      .pillrow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 26px;
+      }
+      .pill {
+        font-size: 12.5px;
+        font-weight: 500;
+        padding: 5px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: #e6eaf0;
+      }
+      .pill b {
+        color: #7ee2a8;
+        font-weight: 600;
+      }
+
+      /* ---- nav ---- */
+      nav.toc {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(246, 247, 249, 0.85);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+        margin: -48px -24px 40px;
+        padding: 12px 24px;
+      }
+      nav.toc .inner {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+      }
+      nav.toc a {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        padding: 6px 12px;
+        border-radius: 8px;
+        white-space: nowrap;
+      }
+      nav.toc a:hover {
+        background: #eceef1;
+        color: var(--ink);
+      }
+      nav.toc .brand {
+        font-weight: 700;
+        color: var(--ink);
+        margin-right: 8px;
+        font-size: 13.5px;
+      }
+
+      /* ---- sections ---- */
+      section {
+        margin-bottom: 64px;
+        scroll-margin-top: 64px;
+      }
+      .sec-head {
+        margin-bottom: 22px;
+      }
+      .sec-num {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        background: var(--accent-soft);
+        padding: 3px 9px;
+        border-radius: 7px;
+        margin-bottom: 12px;
+      }
+      h2 {
+        font-size: 27px;
+        margin: 0 0 8px;
+        letter-spacing: -0.015em;
+        font-weight: 700;
+      }
+      .sec-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15.5px;
+        max-width: 760px;
+      }
+      h3 {
+        font-size: 17px;
+        margin: 0 0 4px;
+        font-weight: 650;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0 0 16px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 22px;
+      }
+      .grid2.lean {
+        grid-template-columns: 1.1fr 0.9fr;
+      }
+      @media (max-width: 880px) {
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .caption {
+        font-size: 13px;
+        color: var(--muted);
+        padding: 12px 18px;
+        border-top: 1px dashed var(--line);
+        background: #fafbfc;
+        border-radius: 0 0 var(--radius) var(--radius);
+      }
+      .caption b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .mock-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 0 0 10px;
+      }
+      .mock-label .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      /* ================= APP MOCKUP ================= */
+      .app {
+        display: grid;
+        grid-template-columns: 248px 1fr;
+        height: 540px;
+        border-radius: var(--radius);
+        overflow: hidden;
+        border: 1px solid var(--line-strong);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        font-size: 13px;
+      }
+      .app.tall {
+        height: 600px;
+      }
+      /* sidebar */
+      .sidebar {
+        background: #fbfbfc;
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .sb-top {
+        padding: 12px 12px 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .sb-logo {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #16a34a, #0f7a37);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .sb-title {
+        font-weight: 650;
+        font-size: 14px;
+      }
+      .sb-btn {
+        margin: 4px 12px;
+        padding: 7px 10px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        cursor: default;
+      }
+      .sb-btn.primary {
+        background: var(--ink);
+        color: #fff;
+        font-weight: 550;
+      }
+      .sb-section {
+        padding: 16px 14px 6px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--faint);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .sb-section .add {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        background: #eef0f3;
+      }
+      .sb-chat {
+        margin: 1px 8px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        color: #3b4250;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sb-chat.active {
+        background: #eef0f3;
+        font-weight: 550;
+        color: var(--ink);
+      }
+
+      /* linked repo rows in sidebar */
+      .repo-row {
+        margin: 2px 8px;
+        padding: 8px 10px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .repo-row:hover,
+      .repo-row.hover {
+        background: #eef0f3;
+      }
+      .repo-ico {
+        color: var(--faint);
+        flex: none;
+      }
+      .repo-meta {
+        min-width: 0;
+        flex: 1;
+      }
+      .repo-name {
+        font-weight: 550;
+        font-size: 12.5px;
+        color: #2b3038;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .repo-sub {
+        font-size: 11px;
+        color: var(--faint);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .repo-actions {
+        display: flex;
+        gap: 2px;
+        flex: none;
+      }
+      .icon-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        color: var(--faint);
+        background: transparent;
+      }
+      .icon-btn:hover,
+      .icon-btn.hl {
+        background: #e2e5ea;
+        color: var(--muted);
+      }
+      .icon-btn.spin svg {
+        animation: spin 1.1s linear infinite;
+        color: var(--blue);
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* main pane */
+      .main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: var(--panel);
+      }
+      .main-top {
+        height: 46px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 10px;
+        color: var(--muted);
+      }
+      .chat-scroll {
+        flex: 1;
+        overflow: hidden;
+        padding: 22px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .composer {
+        border-top: 1px solid var(--line);
+        padding: 12px 16px;
+      }
+      .composer-box {
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        padding: 10px 12px;
+        color: var(--faint);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .msg {
+        display: flex;
+        gap: 10px;
+        max-width: 92%;
+      }
+      .msg.user {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .avatar.ai {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .avatar.me {
+        background: #e7ebf0;
+        color: #475569;
+      }
+      .bubble {
+        background: #f4f5f7;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #2b3038;
+      }
+      .msg.user .bubble {
+        background: var(--ink);
+        color: #f2f4f6;
+      }
+
+      /* ================= RETRIEVAL TOOL CARD ================= */
+      .tool-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        background: var(--panel);
+        margin: 4px 0;
+        width: 100%;
+        max-width: 560px;
+      }
+      .tool-head {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 14px;
+        background: #f3f9f5;
+        border-bottom: 1px solid var(--line);
+      }
+      .tool-badge {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .tool-head .t {
+        font-weight: 600;
+        font-size: 12.5px;
+      }
+      .tool-head .q {
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .tool-head .count {
+        margin-left: auto;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent);
+        background: var(--accent-soft);
+        padding: 3px 9px;
+        border-radius: 999px;
+      }
+      .snippet {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      .snippet:last-child {
+        border-bottom: 0;
+      }
+      .snip-src {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        margin-bottom: 7px;
+        flex-wrap: wrap;
+      }
+      .src-repo {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--violet);
+        background: var(--violet-soft);
+        padding: 2px 7px;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+      .src-path {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: #475569;
+      }
+      .src-loc {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--faint);
+      }
+      .src-open {
+        margin-left: auto;
+        color: var(--blue);
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .snip-code {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        line-height: 1.6;
+        color: #cdd3dc;
+        background: var(--code-bg);
+        border-radius: 9px;
+        padding: 10px 12px;
+        overflow: hidden;
+        white-space: pre-wrap;
+      }
+      .snip-code .h {
+        background: rgba(126, 226, 168, 0.16);
+        color: #b9f6cf;
+        border-radius: 3px;
+        padding: 0 2px;
+      }
+      .snip-code .mu {
+        color: #6b7686;
+      }
+
+      /* empty state */
+      .tool-empty {
+        padding: 16px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+
+      /* ================= MODAL (picker) ================= */
+      .modal-stage {
+        position: relative;
+        background: #eceef1;
+        border-radius: var(--radius);
+        padding: 30px;
+        display: grid;
+        place-items: center;
+        min-height: 560px;
+        overflow: hidden;
+      }
+      .modal-stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 11px,
+          rgba(0, 0, 0, 0.012) 11px,
+          rgba(0, 0, 0, 0.012) 22px
+        );
+      }
+      .modal {
+        position: relative;
+        width: 460px;
+        max-width: 100%;
+        background: var(--panel);
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(16, 24, 40, 0.22);
+        border: 1px solid var(--line);
+        overflow: hidden;
+      }
+      .modal-head {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .modal-title {
+        font-weight: 650;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .modal-sub {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .search-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 13px 0 2px;
+        padding: 9px 11px;
+        border: 1px solid var(--line-strong);
+        border-radius: 10px;
+        color: var(--muted);
+      }
+      .search-box .typed {
+        color: var(--ink);
+      }
+      .search-box .caret {
+        width: 1.5px;
+        height: 15px;
+        background: var(--blue);
+        display: inline-block;
+        animation: blink 1s steps(1) infinite;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      .repo-list {
+        max-height: 320px;
+        overflow: hidden;
+      }
+      .pick-row {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 11px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .pick-row:last-child {
+        border-bottom: 0;
+      }
+      .pick-ico {
+        color: var(--faint);
+        flex: none;
+      }
+      .pick-meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .pick-name {
+        font-size: 13px;
+        font-weight: 550;
+      }
+      .pick-name .owner {
+        color: var(--faint);
+        font-weight: 400;
+      }
+      .pick-desc {
+        font-size: 11.5px;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .vis {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 2px 7px;
+        border-radius: 999px;
+      }
+      .vis.priv {
+        background: #f1f5f9;
+        color: #64748b;
+      }
+      .vis.pub {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+      .btn {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 13px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+      .btn.link {
+        background: var(--ink);
+        color: #fff;
+      }
+      .btn.linked {
+        background: var(--accent-soft);
+        color: #15803d;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .btn.busy {
+        background: #eef0f3;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      /* ================= FLOW DIAGRAMS ================= */
+      .flow {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 8px 4px;
+      }
+      .lane {
+        display: grid;
+        grid-template-columns: 132px 1fr;
+        gap: 16px;
+        align-items: stretch;
+      }
+      .lane + .lane {
+        border-top: 1px dashed var(--line);
+      }
+      .lane-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 16px 0;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .lane-label .ava {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .lane-steps {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px 0;
+      }
+      .step {
+        position: relative;
+        background: var(--panel);
+        border: 1px solid var(--line-strong);
+        border-radius: 11px;
+        padding: 9px 13px;
+        font-size: 12.5px;
+        box-shadow: 0 1px 1px rgba(16, 24, 40, 0.03);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 280px;
+      }
+      .step .n {
+        width: 19px;
+        height: 19px;
+        border-radius: 50%;
+        background: var(--ink);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .step.act {
+        border-color: var(--accent);
+        background: #f5fcf8;
+      }
+      .step.act .n {
+        background: var(--accent);
+      }
+      .step.io {
+        border-color: var(--blue);
+        background: #f4f8ff;
+      }
+      .step.io .n {
+        background: var(--blue);
+      }
+      .step.disk {
+        border-color: var(--amber);
+        background: #fffbf3;
+      }
+      .step.disk .n {
+        background: var(--amber);
+      }
+      .arrow {
+        color: var(--faint);
+        flex: none;
+      }
+      .lane.ai .ava {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .lane.you .ava {
+        background: #e7ebf0;
+        color: #475569;
+      }
+      .lane.gh .ava {
+        background: #1c2024;
+        color: #fff;
+      }
+      .lane.disk .ava {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .note {
+        font-size: 12px;
+        color: var(--muted);
+        background: #fbfbfc;
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--amber);
+        border-radius: 8px;
+        padding: 9px 13px;
+        margin-top: 12px;
+      }
+      .note b {
+        color: var(--ink);
+      }
+
+      /* ================= ARCHITECTURE ================= */
+      .arch {
+        display: grid;
+        grid-template-columns: 1fr 70px 1fr 70px 1fr;
+        gap: 0;
+        align-items: center;
+        padding: 14px 8px;
+      }
+      @media (max-width: 880px) {
+        .arch {
+          grid-template-columns: 1fr;
+        }
+        .arch .conn {
+          display: none;
+        }
+      }
+      .node {
+        border-radius: 13px;
+        padding: 16px;
+        border: 1.5px solid;
+      }
+      .node h4 {
+        margin: 0 0 8px;
+        font-size: 13.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .node ul {
+        margin: 0;
+        padding-left: 16px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .node li {
+        margin: 3px 0;
+      }
+      .node.client {
+        border-color: #bfdbfe;
+        background: #f4f8ff;
+      }
+      .node.server {
+        border-color: #bbf7d0;
+        background: #f4fcf7;
+      }
+      .node.ext {
+        border-color: #d6d9de;
+        background: #fafbfc;
+      }
+      .node .tag {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--faint);
+      }
+      .conn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: var(--faint);
+        font-size: 10px;
+        text-align: center;
+      }
+      .conn .ln {
+        width: 100%;
+        height: 1.5px;
+        background: var(--line-strong);
+        position: relative;
+      }
+      .conn .ln::after {
+        content: "▶";
+        position: absolute;
+        right: -2px;
+        top: -7px;
+        font-size: 9px;
+        color: var(--line-strong);
+      }
+
+      .layer-band {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 880px) {
+        .layer-band {
+          grid-template-columns: 1fr;
+        }
+      }
+      .band {
+        border-radius: 11px;
+        padding: 13px 15px;
+        border: 1px solid var(--line);
+      }
+      .band h5 {
+        margin: 0 0 5px;
+        font-size: 12.5px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .band p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .band.b1 {
+        background: #f4f8ff;
+        border-color: #cfe0fb;
+      }
+      .band.b2 {
+        background: #f4fcf7;
+        border-color: #c7f0d4;
+      }
+      .band.b3 {
+        background: #fffbf3;
+        border-color: #f5e3bf;
+      }
+
+      /* ================= DATA MODEL ================= */
+      .schema {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+      }
+      .schema-head {
+        background: var(--code-bg);
+        color: #e6eaf0;
+        padding: 11px 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .schema-head .key {
+        margin-left: auto;
+        font-size: 11px;
+        color: #7ee2a8;
+      }
+      .col {
+        display: grid;
+        grid-template-columns: 200px 130px 1fr;
+        gap: 10px;
+        padding: 9px 16px;
+        border-bottom: 1px solid var(--line);
+        align-items: baseline;
+      }
+      .col:last-child {
+        border-bottom: 0;
+      }
+      .col:nth-child(even) {
+        background: #fafbfc;
+      }
+      .col .cname {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .col .cname .pk {
+        color: var(--accent);
+        font-size: 10px;
+        margin-left: 5px;
+      }
+      .col .cname .fk {
+        color: var(--blue);
+        font-size: 10px;
+        margin-left: 5px;
+      }
+      .col .ctype {
+        color: var(--violet);
+      }
+      .col .cdesc {
+        font-family: var(--sans);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      /* ================= GLOSSARY / scope ================= */
+      .term-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 720px) {
+        .term-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .term {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 13px 15px;
+        background: var(--panel);
+      }
+      .term dt {
+        font-weight: 650;
+        font-size: 13.5px;
+        margin-bottom: 3px;
+      }
+      .term dd {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+
+      .scope {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 720px) {
+        .scope {
+          grid-template-columns: 1fr;
+        }
+      }
+      .scope-col {
+        border-radius: 12px;
+        padding: 16px 18px;
+        border: 1px solid;
+      }
+      .scope-col.in {
+        background: #f4fcf7;
+        border-color: #c7f0d4;
+      }
+      .scope-col.out {
+        background: #fafafb;
+        border-color: var(--line);
+      }
+      .scope-col h4 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .scope-col ul {
+        margin: 0;
+        padding-left: 4px;
+        list-style: none;
+      }
+      .scope-col li {
+        font-size: 13px;
+        padding: 4px 0 4px 24px;
+        position: relative;
+        color: #3b4250;
+      }
+      .scope-col.in li::before {
+        content: "✓";
+        position: absolute;
+        left: 4px;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .scope-col.out li {
+        color: var(--muted);
+      }
+      .scope-col.out li::before {
+        content: "—";
+        position: absolute;
+        left: 4px;
+        color: var(--faint);
+      }
+
+      footer {
+        text-align: center;
+        color: var(--faint);
+        font-size: 12.5px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+      footer code {
+        background: #eef0f3;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="inner">
+        <div class="eyebrow">Premysl · Visual Spec</div>
+        <h1>Linked Repository Retrieval</h1>
+        <p>
+          Link your own GitHub repos as sources, and the assistant searches their text — your docs
+          and notes — to ground and cite its answers. This page shows the key screens, the behaviour
+          behind them, and how the pieces fit together. It's for shared understanding, not
+          implementation detail.
+        </p>
+        <div class="pillrow">
+          <span class="pill"><b>Phase 1</b> · text search over snapshots</span>
+          <span class="pill">Owner-only, locked mode</span>
+          <span class="pill">Manual refresh</span>
+          <span class="pill"><b>Markdown-only</b>, shallow snapshots on <b>.data</b></span>
+          <span class="pill">RAG deferred to phase 2</span>
+        </div>
+      </div>
+    </header>
+
+    <nav class="toc">
+      <div class="inner">
+        <span class="brand">Contents</span>
+        <a href="#picture">Big picture</a>
+        <a href="#sidebar">Sidebar</a>
+        <a href="#picker">Picker</a>
+        <a href="#results">Results in chat</a>
+        <a href="#link">Linking flow</a>
+        <a href="#retrieve">Retrieval flow</a>
+        <a href="#refresh">Refresh &amp; unlink</a>
+        <a href="#arch">Architecture</a>
+        <a href="#data">Data model</a>
+        <a href="#scope">Scope</a>
+      </div>
+    </nav>
+
+    <div class="wrap">
+      <!-- =============== BIG PICTURE =============== -->
+      <section id="picture">
+        <div class="sec-head">
+          <span class="sec-num">00 · Orientation</span>
+          <h2>The whole thing in one breath</h2>
+          <p>Four moving parts. Everything below is just a closer look at one of them.</p>
+        </div>
+        <div class="layer-band">
+          <div class="band b1">
+            <h5>🔗 Link</h5>
+            <p>
+              Open a picker from the sidebar, search your own repos, and link the ones you want.
+              Linking immediately downloads a snapshot of the repo's files to the server.
+            </p>
+          </div>
+          <div class="band b2">
+            <h5>🔍 Retrieve</h5>
+            <p>
+              Ask a question in chat. The assistant text-searches every linked snapshot in one step
+              and pulls back the relevant pieces of files as grounded, cited context.
+            </p>
+          </div>
+          <div class="band b3">
+            <h5>🔄 Refresh</h5>
+            <p>
+              Snapshots are frozen in time. When a repo changes on GitHub, you press refresh to
+              re-download it. Nothing updates on its own.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== SIDEBAR =============== -->
+      <section id="sidebar">
+        <div class="sec-head">
+          <span class="sec-num">01 · UI Composition</span>
+          <h2>Linked repositories live in the sidebar</h2>
+          <p>
+            A new section under the chat list. One control opens the picker; each linked repo shows
+            its freshness and carries refresh and unlink actions — right where the owner already
+            works.
+          </p>
+        </div>
+
+        <div class="grid2 lean">
+          <div>
+            <p class="mock-label"><span class="dot"></span> App, left sidebar in focus</p>
+            <div class="app">
+              <!-- sidebar -->
+              <div class="sidebar">
+                <div class="sb-top">
+                  <div class="sb-logo">P</div>
+                  <div class="sb-title">Premysl</div>
+                </div>
+                <div class="sb-btn primary">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  New chat
+                </div>
+
+                <div class="sb-section">Chats</div>
+                <div class="sb-chat active">Drizzle migration questions</div>
+                <div class="sb-chat">Coolify deploy checklist</div>
+                <div class="sb-chat">Glossary wording pass</div>
+
+                <div class="sb-section">
+                  Linked repositories
+                  <span class="add" title="Link a repository">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.4"
+                      stroke-linecap="round"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </span>
+                </div>
+
+                <div class="repo-row hover">
+                  <span class="repo-ico"
+                    ><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
+                      <path
+                        d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.32c-2.23.48-2.7-1.08-2.7-1.08-.36-.92-.89-1.16-.89-1.16-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.71 1.23 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 014 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"
+                      /></svg
+                  ></span>
+                  <div class="repo-meta">
+                    <div class="repo-name">lukas/notes</div>
+                    <div class="repo-sub">refreshed 2h ago</div>
+                  </div>
+                  <div class="repo-actions">
+                    <span class="icon-btn hl" title="Refresh snapshot">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M21 12a9 9 0 11-3-6.7L21 8" />
+                        <path d="M21 3v5h-5" />
+                      </svg>
+                    </span>
+                    <span class="icon-btn" title="Unlink">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="repo-row">
+                  <span class="repo-ico"
+                    ><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
+                      <path
+                        d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.32c-2.23.48-2.7-1.08-2.7-1.08-.36-.92-.89-1.16-.89-1.16-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.71 1.23 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 014 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"
+                      /></svg
+                  ></span>
+                  <div class="repo-meta">
+                    <div class="repo-name">lukas/premysl</div>
+                    <div class="repo-sub">refreshed 3d ago</div>
+                  </div>
+                  <div class="repo-actions">
+                    <span class="icon-btn spin" title="Refreshing…">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M21 12a9 9 0 11-3-6.7L21 8" />
+                        <path d="M21 3v5h-5" />
+                      </svg>
+                    </span>
+                    <span class="icon-btn" title="Unlink">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+
+                <div style="flex: 1"></div>
+                <div class="sb-btn">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" />
+                  </svg>
+                  lukas
+                </div>
+              </div>
+              <!-- main, dimmed -->
+              <div class="main" style="opacity: 0.5">
+                <div class="main-top">Drizzle migration questions</div>
+                <div class="chat-scroll"></div>
+                <div class="composer"><div class="composer-box">Ask anything…</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3>What each row tells the owner</h3>
+            <p class="lead">
+              The list answers one question at a glance:
+              <b>what does the assistant currently have access to, and how fresh is it?</b>
+            </p>
+            <div class="card" style="padding: 6px 4px">
+              <div class="col" style="grid-template-columns: 150px 1fr">
+                <span class="cname">Repo name</span>
+                <span class="cdesc"
+                  >The full <code>owner/name</code> — the identity that keys both the link record
+                  and the on-disk snapshot.</span
+                >
+              </div>
+              <div class="col" style="grid-template-columns: 150px 1fr">
+                <span class="cname">“refreshed Xh ago”</span>
+                <span class="cdesc"
+                  >Last-refreshed time, so the owner can judge whether results are current before
+                  trusting them.</span
+                >
+              </div>
+              <div class="col" style="grid-template-columns: 150px 1fr">
+                <span class="cname">↻ Refresh</span>
+                <span class="cdesc"
+                  >Re-downloads the default branch and replaces the snapshot. Spins while
+                  running.</span
+                >
+              </div>
+              <div class="col" style="grid-template-columns: 150px 1fr">
+                <span class="cname">✕ Unlink</span>
+                <span class="cdesc"
+                  >Removes the repo as a source and deletes its snapshot from disk. Asks to confirm
+                  first.</span
+                >
+              </div>
+              <div class="col" style="grid-template-columns: 150px 1fr">
+                <span class="cname">＋ on the header</span>
+                <span class="cdesc">Opens the repository picker (next section).</span>
+              </div>
+            </div>
+            <div class="note">
+              <b>Freshness is honest.</b> The timestamp exists precisely because snapshots never
+              update themselves — the owner is never surprised by stale results after a push.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== PICKER =============== -->
+      <section id="picker">
+        <div class="sec-head">
+          <span class="sec-num">02 · UI Composition</span>
+          <h2>The repository picker</h2>
+          <p>
+            Opens over the app. Lists only repos the owner owns — public and private — and filters
+            live as they type. Already-linked repos are marked so they can't be linked twice.
+          </p>
+        </div>
+
+        <div class="modal-stage">
+          <div class="modal">
+            <div class="modal-head">
+              <div class="modal-title">
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.8 1.7" />
+                  <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
+                </svg>
+                Link a repository
+              </div>
+              <div class="modal-sub">Your repositories — public and private</div>
+              <div class="search-box">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+                <span class="typed">note</span><span class="caret"></span>
+              </div>
+            </div>
+            <div class="repo-list">
+              <div class="pick-row">
+                <span class="pick-ico"
+                  ><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                      d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8z"
+                    /></svg
+                ></span>
+                <div class="pick-meta">
+                  <div class="pick-name"><span class="owner">lukas/</span>notes</div>
+                  <div class="pick-desc">Personal markdown notes &amp; second brain</div>
+                </div>
+                <span class="vis priv">Private</span>
+                <span class="btn linked">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  Linked
+                </span>
+              </div>
+              <div class="pick-row">
+                <span class="pick-ico"
+                  ><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                      d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8z"
+                    /></svg
+                ></span>
+                <div class="pick-meta">
+                  <div class="pick-name"><span class="owner">lukas/</span>release-notes</div>
+                  <div class="pick-desc">Changelogs and release docs</div>
+                </div>
+                <span class="vis pub">Public</span>
+                <span class="btn link">Link</span>
+              </div>
+              <div class="pick-row">
+                <span class="pick-ico"
+                  ><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                      d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8z"
+                    /></svg
+                ></span>
+                <div class="pick-meta">
+                  <div class="pick-name">
+                    <span class="owner">lukas/</span>meeting-notes-archive
+                  </div>
+                  <div class="pick-desc">Downloading snapshot…</div>
+                </div>
+                <span class="vis priv">Private</span>
+                <span class="btn busy">
+                  <svg
+                    class=""
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.4"
+                    stroke-linecap="round"
+                    style="animation: spin 1.1s linear infinite"
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.2-8.5" />
+                  </svg>
+                  Linking…
+                </span>
+              </div>
+            </div>
+            <div class="caption" style="border-top: 1px solid var(--line); background: #fafbfc">
+              Showing repos matching <b>“note”</b> · only repositories you own
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top: 22px">
+          <div class="card" style="padding: 16px 18px">
+            <h3>Three row states</h3>
+            <ul style="margin: 8px 0 0; padding-left: 18px; font-size: 13.5px; color: #3b4250">
+              <li style="margin: 7px 0">
+                <b>Link</b> — not yet a source. One click links it and starts the snapshot download.
+              </li>
+              <li style="margin: 7px 0">
+                <b>Linking…</b> — the snapshot is downloading right now. It becomes searchable the
+                moment it lands.
+              </li>
+              <li style="margin: 7px 0">
+                <b>Linked ✓</b> — already a source. Shown disabled so the same repo can't be added
+                twice.
+              </li>
+            </ul>
+          </div>
+          <div class="card" style="padding: 16px 18px">
+            <h3>Why owner-only, and why client-side search</h3>
+            <p style="font-size: 13.5px; color: #3b4250; margin: 8px 0 0">
+              The list is filtered to repos the owner <b>owns</b> so it matches their mental model
+              of “my repos” and stays short. Because it's short, the full list is fetched once and
+              filtered <b>in the browser</b> as they type — no round-trip per keystroke. Server-side
+              search is only revisited if the list grows into the hundreds.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== RESULTS IN CHAT =============== -->
+      <section id="results">
+        <div class="sec-head">
+          <span class="sec-num">03 · UI Composition</span>
+          <h2>Retrieval results, rendered in the conversation</h2>
+          <p>
+            When the assistant searches the linked repos, the matches render as a tool card inline —
+            each snippet carries its repository, file path, and location, so an answer can cite
+            exactly where it came from and the owner can open the source.
+          </p>
+        </div>
+
+        <div class="grid2 lean">
+          <div>
+            <p class="mock-label"><span class="dot"></span> Conversation with a retrieval result</p>
+            <div class="app tall">
+              <div class="sidebar" style="opacity: 0.45">
+                <div class="sb-top">
+                  <div class="sb-logo">P</div>
+                  <div class="sb-title">Premysl</div>
+                </div>
+                <div class="sb-btn primary">＋ New chat</div>
+                <div class="sb-section">Linked repositories</div>
+                <div class="repo-row">
+                  <span class="repo-ico">●</span>
+                  <div class="repo-meta"><div class="repo-name">lukas/notes</div></div>
+                </div>
+                <div class="repo-row">
+                  <span class="repo-ico">●</span>
+                  <div class="repo-meta"><div class="repo-name">lukas/premysl</div></div>
+                </div>
+              </div>
+              <div class="main">
+                <div class="main-top">How do I roll back a Drizzle migration?</div>
+                <div class="chat-scroll">
+                  <div class="msg user">
+                    <div class="avatar me">L</div>
+                    <div class="bubble">
+                      How do I roll back a bad Drizzle migration? I think I wrote a note on it.
+                    </div>
+                  </div>
+                  <div class="msg">
+                    <div class="avatar ai">P</div>
+                    <div style="min-width: 0; width: 100%">
+                      <div class="bubble" style="display: inline-block; margin-bottom: 8px">
+                        Searching your linked repositories…
+                      </div>
+                      <!-- TOOL CARD -->
+                      <div class="tool-card">
+                        <div class="tool-head">
+                          <span class="tool-badge">
+                            <svg
+                              width="15"
+                              height="15"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2.2"
+                              stroke-linecap="round"
+                            >
+                              <circle cx="11" cy="11" r="7" />
+                              <path d="m21 21-4.3-4.3" />
+                            </svg>
+                          </span>
+                          <div>
+                            <div class="t">Searched linked repositories</div>
+                            <div class="q">“roll back drizzle migration”</div>
+                          </div>
+                          <span class="count">2 matches</span>
+                        </div>
+
+                        <div class="snippet">
+                          <div class="snip-src">
+                            <span class="src-repo">lukas/notes</span>
+                            <span class="src-path">drizzle/rollbacks.md</span>
+                            <span class="src-loc">L12–18</span>
+                            <span class="src-open"
+                              >open
+                              <svg
+                                width="11"
+                                height="11"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <path d="M7 17 17 7M8 7h9v9" /></svg
+                            ></span>
+                          </div>
+                          <div class="snip-code">
+                            <span class="mu">## Rolling back a migration</span>
+                            Drizzle has no down-migrations. To roll back you
+                            <span class="h">drop the migration row from __drizzle_migrations</span>,
+                            then manually revert the schema, then re-generate.
+                            <span class="mu">Never hand-edit an applied migration file.</span>
+                          </div>
+                        </div>
+
+                        <div class="snippet">
+                          <div class="snip-src">
+                            <span class="src-repo">lukas/premysl</span>
+                            <span class="src-path">CLAUDE.md</span>
+                            <span class="src-loc">L18</span>
+                            <span class="src-open"
+                              >open
+                              <svg
+                                width="11"
+                                height="11"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <path d="M7 17 17 7M8 7h9v9" /></svg
+                            ></span>
+                          </div>
+                          <div class="snip-code">
+                            <span class="mu">db:generate / db:migrate — Drizzle migrations.</span>
+                            <span class="h">Never hand-edit applied migrations.</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="bubble" style="margin-top: 8px">
+                        You don't roll back in place — Drizzle has no down-migrations. Per
+                        <b>lukas/notes › drizzle/rollbacks.md</b>, drop the migration row, revert
+                        the schema by hand, then re-generate. And never hand-edit an applied
+                        migration.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="composer">
+                  <div class="composer-box">
+                    Ask anything…
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3>Anatomy of a snippet</h3>
+            <p class="lead">
+              Every match is a self-contained, citable unit. Provenance on top, content below.
+            </p>
+            <div class="card" style="padding: 6px 4px; margin-bottom: 16px">
+              <div class="col" style="grid-template-columns: 130px 1fr">
+                <span class="cname" style="color: var(--violet)">Repository</span>
+                <span class="cdesc"
+                  >Which linked repo the match came from — the owner searches all of them at once
+                  and never names one.</span
+                >
+              </div>
+              <div class="col" style="grid-template-columns: 130px 1fr">
+                <span class="cname">File path</span>
+                <span class="cdesc"
+                  >Path inside that repo, so the answer can cite it and the owner can open the
+                  source.</span
+                >
+              </div>
+              <div class="col" style="grid-template-columns: 130px 1fr">
+                <span class="cname">Location</span>
+                <span class="cdesc"
+                  >The matched line range — a window around the hit, not just the single line.
+                  “Open” links to that range on GitHub, pinned to the snapshot's commit so it stays
+                  accurate after later pushes.</span
+                >
+              </div>
+              <div class="col" style="grid-template-columns: 130px 1fr">
+                <span class="cname">The piece</span>
+                <span class="cdesc"
+                  >A whole small file, or a window of lines — coherent enough to actually answer
+                  from.</span
+                >
+              </div>
+            </div>
+
+            <p class="mock-label">
+              <span class="dot" style="background: var(--faint)"></span> Nothing found
+            </p>
+            <div class="tool-card" style="max-width: none">
+              <div class="tool-empty">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--faint)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+                <span
+                  >No matches in your linked repositories for
+                  <b style="color: var(--ink)">“roll back drizzle migration”</b>. Try rephrasing, or
+                  link another repository.</span
+                >
+              </div>
+            </div>
+            <div class="note" style="border-left-color: var(--accent)">
+              <b>Honest empties matter.</b> The assistant says when it found nothing, so the owner
+              knows to rephrase or link a different repo — rather than getting a confident answer
+              with no grounding.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== LINKING FLOW =============== -->
+      <section id="link">
+        <div class="sec-head">
+          <span class="sec-num">04 · Behaviour</span>
+          <h2>What happens when you link a repository</h2>
+          <p>
+            One click in the picker sets off a short chain. By the end, a snapshot is on disk and
+            immediately searchable — no extra step.
+          </p>
+        </div>
+
+        <div class="card" style="padding: 6px 22px">
+          <div class="flow">
+            <div class="lane you">
+              <div class="lane-label"><span class="ava">L</span> Owner</div>
+              <div class="lane-steps">
+                <div class="step">
+                  <span class="n">1</span> Click <b>Link</b> on a repo in the picker
+                </div>
+              </div>
+            </div>
+            <div class="lane ai">
+              <div class="lane-label">
+                <span class="ava"
+                  ><svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="11" width="18" height="10" rx="2" />
+                    <circle cx="12" cy="5" r="2" />
+                    <path d="M12 7v4" /></svg
+                ></span>
+                Server
+              </div>
+              <div class="lane-steps">
+                <div class="step act">
+                  <span class="n">2</span> Verify it's the owner (locked mode gate)
+                </div>
+                <span class="arrow">→</span>
+                <div class="step io">
+                  <span class="n">3</span> Record the link in <code>linkedRepositories</code>
+                </div>
+              </div>
+            </div>
+            <div class="lane gh">
+              <div class="lane-label">
+                <span class="ava"
+                  ><svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                      d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.32c-2.23.48-2.7-1.08-2.7-1.08-.36-.92-.89-1.16-.89-1.16-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.71 1.23 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 014 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"
+                    /></svg
+                ></span>
+                GitHub
+              </div>
+              <div class="lane-steps">
+                <div class="step io">
+                  <span class="n">4</span> Download the default-branch <b>tarball</b> using the
+                  session token
+                </div>
+              </div>
+            </div>
+            <div class="lane disk">
+              <div class="lane-label">
+                <span class="ava"
+                  ><svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <ellipse cx="12" cy="5" rx="9" ry="3" />
+                    <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5" /></svg
+                ></span>
+                Disk (.data)
+              </div>
+              <div class="lane-steps">
+                <div class="step disk">
+                  <span class="n">5</span> Extract <b>markdown only</b> into
+                  <code>.data/repos/&lt;id&gt;/</code>
+                </div>
+                <span class="arrow">→</span>
+                <div class="step act">
+                  <span class="n">6</span> Row flips to <b>Linked ✓</b> — now searchable
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="note">
+          <b>No background work, ever.</b> Every GitHub call happens inside a request the owner
+          made, using the token that lives only in their session. There is no webhook, no scheduler,
+          no offline job — by design.
+        </div>
+      </section>
+
+      <!-- =============== RETRIEVAL FLOW =============== -->
+      <section id="retrieve">
+        <div class="sec-head">
+          <span class="sec-num">05 · Behaviour</span>
+          <h2>What happens when you ask a question</h2>
+          <p>
+            The assistant decides a question needs the owner's material, calls one retrieval tool
+            with a plain query, and gets back ranked pieces of files. No repository argument — it
+            searches them all.
+          </p>
+        </div>
+
+        <div class="card" style="padding: 6px 22px">
+          <div class="flow">
+            <div class="lane you">
+              <div class="lane-label"><span class="ava">L</span> Owner</div>
+              <div class="lane-steps">
+                <div class="step"><span class="n">1</span> Asks a question in chat</div>
+              </div>
+            </div>
+            <div class="lane ai">
+              <div class="lane-label"><span class="ava">P</span> Assistant</div>
+              <div class="lane-steps">
+                <div class="step act">
+                  <span class="n">2</span> Decides it needs the owner's material → calls the
+                  <b>retrieval tool</b> with a free-text query
+                </div>
+              </div>
+            </div>
+            <div class="lane disk">
+              <div class="lane-label">
+                <span class="ava"
+                  ><svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <ellipse cx="12" cy="5" rx="9" ry="3" />
+                    <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5" /></svg
+                ></span>
+                Snapshots
+              </div>
+              <div class="lane-steps">
+                <div class="step disk">
+                  <span class="n">3</span> <b>ripgrep</b> across all of this owner's snapshot
+                  directories
+                </div>
+                <span class="arrow">→</span>
+                <div class="step disk">
+                  <span class="n">4</span> For each hit, take the whole file (if small) or a window
+                  of lines
+                </div>
+              </div>
+            </div>
+            <div class="lane ai">
+              <div class="lane-label"><span class="ava">P</span> Assistant</div>
+              <div class="lane-steps">
+                <div class="step io">
+                  <span class="n">5</span> Receives snippets with repo · path · location
+                </div>
+                <span class="arrow">→</span>
+                <div class="step act">
+                  <span class="n">6</span> Renders the result card &amp; answers
+                  <b>with citations</b>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top: 18px">
+          <div class="note" style="border-left-color: var(--violet); margin-top: 0">
+            <b>One query, all repos.</b> The tool takes only a query — no “which repo?”. The owner
+            never has to know where their answer lives.
+          </div>
+          <div class="note" style="border-left-color: var(--accent); margin-top: 0">
+            <b>Pieces, not lines.</b> Returning a coherent chunk (small whole file, or a line
+            window) is what makes the context good enough to answer from. Markdown-section-aware
+            extraction is a later refinement.
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== REFRESH & UNLINK =============== -->
+      <section id="refresh">
+        <div class="sec-head">
+          <span class="sec-num">06 · Behaviour</span>
+          <h2>Refresh and unlink</h2>
+          <p>
+            Two small lifecycles that keep snapshots current and let the owner take a repo out of
+            scope.
+          </p>
+        </div>
+        <div class="grid2">
+          <div class="card" style="padding: 18px 20px">
+            <h3 style="display: flex; align-items: center; gap: 8px">
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--blue)"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 12a9 9 0 11-3-6.7L21 8" />
+                <path d="M21 3v5h-5" />
+              </svg>
+              Refresh a snapshot
+            </h3>
+            <p class="lead">Owner-initiated, manual only.</p>
+            <ol
+              style="
+                margin: 0;
+                padding-left: 18px;
+                font-size: 13.5px;
+                color: #3b4250;
+                line-height: 1.8;
+              "
+            >
+              <li>Owner presses <b>↻</b> on a linked-repo row.</li>
+              <li>Server re-downloads the current default-branch tarball.</li>
+              <li>It <b>replaces</b> the old snapshot on disk wholesale.</li>
+              <li>The last-refreshed timestamp updates → row shows “just now”.</li>
+            </ol>
+            <div class="note" style="border-left-color: var(--amber)">
+              <b>Nothing auto-updates.</b> Pushing to GitHub does <em>not</em> change a snapshot.
+              Until the owner refreshes, searches reflect the last refresh — which the timestamp
+              always shows.
+            </div>
+          </div>
+
+          <div class="card" style="padding: 18px 20px">
+            <h3 style="display: flex; align-items: center; gap: 8px">
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--rose)"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+              Unlink a repository
+            </h3>
+            <p class="lead">Removes it as a source, cleanly.</p>
+            <ol
+              style="
+                margin: 0;
+                padding-left: 18px;
+                font-size: 13.5px;
+                color: #3b4250;
+                line-height: 1.8;
+              "
+            >
+              <li>Owner presses <b>✕</b> and confirms.</li>
+              <li>The <code>linkedRepositories</code> row is deleted.</li>
+              <li>The on-disk snapshot directory is removed.</li>
+              <li>Retrieval no longer searches it — it's fully out of scope.</li>
+            </ol>
+            <div class="note" style="border-left-color: var(--rose)">
+              <b>Leaves nothing behind.</b> Both the record and the files are gone, so an unlinked
+              repo can never resurface in a search result.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== ARCHITECTURE =============== -->
+      <section id="arch">
+        <div class="sec-head">
+          <span class="sec-num">07 · Architecture</span>
+          <h2>How the pieces fit together</h2>
+          <p>
+            Three places things live: the browser, the server, and GitHub. The owner's GitHub token
+            rides along in their session only; snapshots live on the persistent disk volume.
+          </p>
+        </div>
+
+        <div class="card" style="padding: 18px">
+          <div class="arch">
+            <div class="node client">
+              <h4>🖥️ Browser <span class="tag">app/</span></h4>
+              <ul>
+                <li>Sidebar: linked-repo list + ＋</li>
+                <li>Repository picker (live filter)</li>
+                <li>Chat + retrieval result card</li>
+              </ul>
+            </div>
+            <div class="conn"><span class="ln"></span><span>request</span></div>
+            <div class="node server">
+              <h4>⚙️ Server <span class="tag">server/</span></h4>
+              <ul>
+                <li>Owner gate on every handler</li>
+                <li>Link · unlink · refresh · list</li>
+                <li>Per-request retrieval tool (ripgrep)</li>
+                <li>Session holds the GitHub token</li>
+              </ul>
+            </div>
+            <div class="conn"><span class="ln"></span><span>session token</span></div>
+            <div class="node ext">
+              <h4>🐙 GitHub <span class="tag">api</span></h4>
+              <ul>
+                <li>List the owner's repos</li>
+                <li>Download default-branch tarballs (markdown kept, history dropped)</li>
+                <li>Read-only — no writes ever</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="layer-band">
+            <div class="band b1">
+              <h5>🔐 The token</h5>
+              <p>
+                GitHub login is extended to request <code>repo</code> scope. The token is kept in
+                the session's server-only field — never sent to the client, never written to the
+                database.
+              </p>
+            </div>
+            <div class="band b2">
+              <h5>💾 The snapshots</h5>
+              <p>
+                Markdown files extracted from the tarball under
+                <code>.data/repos/&lt;id&gt;/</code> — shallow, no git history, kept small. The
+                <code>.data</code> volume is mounted in production, so snapshots survive
+                redeployment — no re-linking after a deploy.
+              </p>
+            </div>
+            <div class="band b3">
+              <h5>🗄️ The records</h5>
+              <p>
+                One <code>linkedRepositories</code> row per link in SQLite, keyed to the owner.
+                Cascade-deletes with the user; the snapshot directory is the on-disk half of the
+                same record.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="note">
+          <b>Why download whole repos instead of GitHub's code-search API?</b> That API is
+          default-branch only, caps files at 384&nbsp;KB, allows ~9 requests/minute, and matches
+          prose weakly — a poor fit for a docs assistant. Local snapshots dodge all four, and the
+          extracted markdown is also the natural input for the future RAG phase.
+        </div>
+      </section>
+
+      <!-- =============== DATA MODEL =============== -->
+      <section id="data">
+        <div class="sec-head">
+          <span class="sec-num">08 · Data</span>
+          <h2>The one new table</h2>
+          <p>
+            Following existing schema conventions — UUID primary key, user foreign key with cascade
+            delete, integer timestamps. Its on-disk counterpart is the snapshot directory.
+          </p>
+        </div>
+
+        <div class="schema">
+          <div class="schema-head">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#7ee2a8"
+              stroke-width="2"
+            >
+              <ellipse cx="12" cy="5" rx="9" ry="3" />
+              <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3" />
+            </svg>
+            linkedRepositories
+            <span class="key">SQLite · Drizzle</span>
+          </div>
+          <div class="col">
+            <span class="cname">id <span class="pk">PK</span></span
+            ><span class="ctype">text (uuid)</span
+            ><span class="cdesc">Stable identifier; also names the snapshot directory.</span>
+          </div>
+          <div class="col">
+            <span class="cname">userId <span class="fk">FK → users</span></span
+            ><span class="ctype">text</span
+            ><span class="cdesc">The owning user. Cascade-deletes with the account.</span>
+          </div>
+          <div class="col">
+            <span class="cname">fullName</span><span class="ctype">text</span
+            ><span class="cdesc"
+              ><code>owner/name</code> — the GitHub identity. A rename means re-linking.</span
+            >
+          </div>
+          <div class="col">
+            <span class="cname">defaultBranch</span><span class="ctype">text</span
+            ><span class="cdesc"
+              >The branch a snapshot tracks. Branch selection is out of scope.</span
+            >
+          </div>
+          <div class="col">
+            <span class="cname">snapshotPath</span><span class="ctype">text</span
+            ><span class="cdesc">On-disk location under <code>.data/repos/</code>.</span>
+          </div>
+          <div class="col">
+            <span class="cname">commitSha</span><span class="ctype">text</span
+            ><span class="cdesc"
+              >The commit the snapshot was taken at. Powers commit-pinned “open source” links that
+              stay line-accurate after later pushes.</span
+            >
+          </div>
+          <div class="col">
+            <span class="cname">lastRefreshedAt</span><span class="ctype">integer (ts)</span
+            ><span class="cdesc">Drives the “refreshed Xh ago” freshness label.</span>
+          </div>
+          <div class="col">
+            <span class="cname">createdAt</span><span class="ctype">integer (ts)</span
+            ><span class="cdesc">When the repo was first linked.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== SCOPE =============== -->
+      <section id="scope">
+        <div class="sec-head">
+          <span class="sec-num">09 · Boundaries</span>
+          <h2>What phase 1 is — and isn't</h2>
+          <p>The deliberate line. Everything on the right is a known, intentional deferral.</p>
+        </div>
+        <div class="scope">
+          <div class="scope-col in">
+            <h4>✓ In phase 1</h4>
+            <ul>
+              <li>Link / unlink repos you own (public &amp; private)</li>
+              <li>Snapshot on link; manual refresh</li>
+              <li>Markdown only; shallow, history-free snapshots</li>
+              <li>Plain text search (ripgrep) over all snapshots</li>
+              <li>Whole small files or a line window per match</li>
+              <li>Commit-pinned, citable results rendered inline in chat</li>
+              <li>Owner-only in locked mode; token in-session only</li>
+              <li>Snapshots survive redeployment</li>
+            </ul>
+          </div>
+          <div class="scope-col out">
+            <h4>— Deferred / out of scope</h4>
+            <ul>
+              <li>RAG / semantic search (embeddings) — phase 2</li>
+              <li>Collaborator &amp; organisation repos</li>
+              <li>Non-markdown files (code, data, binaries)</li>
+              <li>Automatic, scheduled, or webhook refresh</li>
+              <li>Persisting the GitHub token at rest</li>
+              <li>Writing to repos (issues, PRs, commits)</li>
+              <li>Branch selection beyond the default branch</li>
+              <li>Per-chat repo scoping (links are account-level)</li>
+              <li>Markdown-section-aware extraction</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== GLOSSARY =============== -->
+      <section id="glossary" style="margin-bottom: 40px">
+        <div class="sec-head">
+          <span class="sec-num">10 · Language</span>
+          <h2>Words we use exactly</h2>
+          <p>Canonical glossary terms. Use these, not their aliases.</p>
+        </div>
+        <dl class="term-grid" style="margin: 0">
+          <div class="term">
+            <dt>GitHub connection</dt>
+            <dd>
+              The owner's logged-in GitHub access, carried in their session — what lets the server
+              call GitHub on their behalf.
+            </dd>
+          </div>
+          <div class="term">
+            <dt>Linked repository</dt>
+            <dd>A repo the owner has added as a source. The act is <b>linking</b>.</dd>
+          </div>
+          <div class="term">
+            <dt>Snapshot</dt>
+            <dd>The downloaded, on-disk copy of a repo's files that retrieval searches.</dd>
+          </div>
+          <div class="term">
+            <dt>Refresh</dt>
+            <dd>Re-downloading a snapshot to replace it with current contents. Always manual.</dd>
+          </div>
+          <div class="term">
+            <dt>Owner</dt>
+            <dd>
+              The single account (<code>NUXT_OWNER_GITHUB_HANDLE</code>) that, in locked mode, may
+              link and retrieve.
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <footer>
+        Visual spec for <b>Linked Repository Retrieval</b> · companion to
+        <code>.aiwork/2026-06-16_linked-repository-retrieval/prd.md</code><br />
+        Mockups are illustrative — they show intent and behaviour, not final pixels.
+      </footer>
+    </div>
+  </body>
+</html>
