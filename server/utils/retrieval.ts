@@ -90,6 +90,7 @@ async function buildSnippet(
   path: string,
   hit: FileHits,
   repo: SnapshotRepo,
+  dates: Record<string, string>,
 ): Promise<RepoSearchSnippet | null> {
   let content: string
   let size: number
@@ -129,6 +130,7 @@ async function buildSnippet(
     url: `https://github.com/${repo.fullName}/blob/${repo.commitSha}/${relPath}#L${startLine}-L${endLine}`,
     content: body,
     whole,
+    lastChanged: dates[relPath],
   }
 }
 
@@ -158,10 +160,21 @@ export async function searchLinkedRepos(userId: string, query: string): Promise<
     .toSorted((a, b) => b[1].matchCount - a[1].matchCount)
     .slice(0, MAX_FILES)
 
+  // Load each snapshot's date manifest (relative path -> ISO date) once, so every
+  // snippet can report its file's last-changed date.
+  const datesByPath = new Map<string, Record<string, string>>()
+  await Promise.all(
+    repos.map(async (r) => {
+      datesByPath.set(r.snapshotPath, await readDatesManifest(r.snapshotPath))
+    }),
+  )
+
   const built = await Promise.all(
     ranked.map(async ([path, hit]) => {
       const repo = repoForPath(path, repos)
-      return repo === undefined ? null : buildSnippet(path, hit, repo)
+      return repo === undefined
+        ? null
+        : buildSnippet(path, hit, repo, datesByPath.get(repo.snapshotPath) ?? {})
     }),
   )
   const matches = built.filter((snippet): snippet is RepoSearchSnippet => snippet !== null)

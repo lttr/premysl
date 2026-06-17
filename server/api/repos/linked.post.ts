@@ -23,11 +23,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: "Repository already linked" })
   }
 
-  const { defaultBranch, commitSha } = await getRepoMeta(token, fullName)
+  const { defaultBranch, commitSha, commitDate } = await getRepoMeta(token, fullName)
 
   const id = crypto.randomUUID()
   const snapshotPath = snapshotPathFor(id)
-  await downloadAndExtractSnapshot(token, fullName, defaultBranch, snapshotPath)
+  await downloadAndExtractSnapshot({
+    token,
+    fullName,
+    ref: defaultBranch,
+    destDir: snapshotPath,
+    commitDate,
+  })
 
   try {
     const [row] = await db

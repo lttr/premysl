@@ -59,6 +59,19 @@ system `rg` or `tar`. The design therefore depends on **no system binaries**:
   (`/{owner}/{repo}/blob/{sha}/{path}#L{a}-L{b}`). Pinning to the SHA keeps the
   "open source" link line-accurate even after the owner pushes new commits, which
   a branch-anchored link would not.
+- Each retrieved snippet also carries its file's **last-changed date** (the most
+  recent commit that touched it), so the assistant can answer time-based questions
+  and weigh recency rather than treating every document as equally current. The
+  tarball cannot supply this — GitHub codeload tarballs stamp every file's mtime
+  with the archive-generation time, not the file's history — so the snapshot step
+  makes additional GitHub API calls at link/refresh time beyond the tarball
+  download: batched GraphQL (aliased `history(first: 1)` per path) with a per-path
+  REST commits fallback. The dates are written as a hidden `.dates.json` sidecar
+  manifest in the snapshot directory (relative path -> ISO 8601 date; ripgrep
+  skips the dotfile during search), keeping per-file metadata with the snapshot
+  rather than in the database and avoiding reliance on filesystem mtimes that the
+  `.data` volume and redeploys do not guarantee. A file whose date cannot be
+  fetched falls back to the snapshot commit date.
 - Refresh is owner-initiated and manual only (a button); the initial snapshot is
   downloaded at link time. There is no automatic, scheduled, or webhook-driven
   refresh, which keeps the session-only token of ADR 0001 intact. Snapshots are

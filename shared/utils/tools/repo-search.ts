@@ -16,6 +16,11 @@ export const repoSearchSnippetSchema = z.object({
   content: z.string(),
   // True when the whole file was returned; false for a line window.
   whole: z.boolean(),
+  // ISO 8601 date of the most recent commit that touched this file (its
+  // last-changed date), so the assistant can reason about recency and answer
+  // time-based questions. Falls back to the snapshot's commit date; absent only
+  // for snapshots taken before per-file dates were tracked.
+  lastChanged: z.string().optional(),
 })
 
 export const repoSearchInputSchema = z.object({

@@ -8,6 +8,14 @@ const props = defineProps<{
 const matches = computed(() =>
   props.invocation.state === "output-available" ? props.invocation.output.matches : [],
 )
+
+function formatDate(iso?: string): string {
+  if (iso === undefined) return ""
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+}
 </script>
 
 <template>
@@ -45,6 +53,14 @@ const matches = computed(() =>
             </span>
             <span class="font-mono text-toned">{{ match.path }}</span>
             <span class="font-mono text-dimmed">L{{ match.startLine }}–{{ match.endLine }}</span>
+            <span
+              v-if="match.lastChanged"
+              class="flex items-center gap-1 text-dimmed"
+              :title="`Last changed ${formatDate(match.lastChanged)}`"
+            >
+              <UIcon name="i-lucide-calendar" class="size-3" />
+              {{ formatDate(match.lastChanged) }}
+            </span>
             <a
               :href="match.url"
               target="_blank"

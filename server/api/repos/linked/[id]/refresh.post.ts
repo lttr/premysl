@@ -20,8 +20,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Linked repository not found" })
   }
 
-  const { defaultBranch, commitSha } = await getRepoMeta(token, row.fullName)
-  await downloadAndExtractSnapshot(token, row.fullName, defaultBranch, row.snapshotPath)
+  const { defaultBranch, commitSha, commitDate } = await getRepoMeta(token, row.fullName)
+  await downloadAndExtractSnapshot({
+    token,
+    fullName: row.fullName,
+    ref: defaultBranch,
+    destDir: row.snapshotPath,
+    commitDate,
+  })
 
   const [updated] = await db
     .update(schema.linkedRepositories)

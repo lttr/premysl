@@ -32,6 +32,23 @@ Running log of how the implementation interprets or diverges from
   surface minimal. The token-in-session mechanism (ADR 0001) is still implemented
   for the link/refresh/available endpoints.
 
+## Per-file dates
+
+- **`.dates.json` sidecar manifest.** Each snapshot gets a hidden
+  `.data/repos/<id>/.dates.json` mapping relative path → ISO 8601 last-changed
+  date. Hidden so ripgrep skips it during search. Chosen over file mtimes (the
+  tarball stamps all files with the archive time, and mtime survival across the
+  `.data` volume / redeploys isn't guaranteed) and over DB rows (the snapshot is
+  the natural owner of per-file metadata; no migration needed).
+- **Dates fetched at snapshot time, GraphQL-first.** `fetchFileDates` in
+  `github.ts` batches aliased `history(first: 1, path: …)` GraphQL fields (100 per
+  request), falling back to per-path REST `commits?path=` for anything GraphQL
+  didn't resolve. Failures degrade silently to the snapshot commit date (from
+  `getRepoMeta`, now also returning `commitDate`), so every file always has a date.
+- **`lastChanged` is optional on the snippet schema.** Snapshots taken before this
+  change have no manifest; `readDatesManifest` returns `{}` and the field is
+  omitted, which the renderer guards with `v-if`.
+
 ## Design decisions where the spec was ambiguous
 
 - **Query handling for ripgrep.** The assistant passes a free-text query. Phase 1

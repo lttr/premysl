@@ -77,21 +77,25 @@ refresh button to re-download its snapshot.
 19. As the owner, I want retrieved results to identify the repository, file path,
     and location, so that the assistant can cite where an answer came from and I
     can open the source.
-20. As the owner, I want retrieval to work over markdown docs, so that my notes
+20. As the owner, I want each retrieved document to carry the date it was last
+    changed, so that the assistant can answer time-based questions (what is most
+    recent, what changed when) and rank results by recency rather than treating
+    every document as equally current.
+21. As the owner, I want retrieval to work over markdown docs, so that my notes
     and documentation are first-class sources.
-21. As the owner, I want the assistant to tell me when it found nothing relevant,
+22. As the owner, I want the assistant to tell me when it found nothing relevant,
     so that I can rephrase or link a different repository.
-22. As the owner, I want the retrieval results to render readably in the chat, so
+23. As the owner, I want the retrieval results to render readably in the chat, so
     that I can see the matched snippets and their sources inline.
 
 ### Access and safety
 
-23. As the owner in locked mode, I want only my account to be able to link repos
+24. As the owner in locked mode, I want only my account to be able to link repos
     and trigger retrieval, so that no one else can reach my repositories through
     the app.
-24. As the owner, I want my GitHub credential to live only in my session, so that
+25. As the owner, I want my GitHub credential to live only in my session, so that
     there is no long-lived repository token stored at rest.
-25. As the owner, I want my linked repositories and snapshots to survive a
+26. As the owner, I want my linked repositories and snapshots to survive a
     redeployment, so that I do not have to re-link after every deploy.
 
 ## Implementation Decisions
@@ -116,9 +120,14 @@ refresh button to re-download its snapshot.
 - A new control in the left sidebar opens the picker. The picker lists only repos
   the owner owns, public and private, via the authenticated GitHub API filtered to
   owner affiliation.
-- The picker fetches the owner's repository list once (paginated) and filters
-  client-side as the owner types. Server-side search is deferred unless the list
-  grows into the hundreds.
+- The picker is a `UCommandPalette` (Nuxt UI v4) wrapped in a `UModal`, matching
+  the existing `UModal` usage in the app. The command palette supplies the
+  client-side fuzzy search, per-item icons, loading and empty states, and keyboard
+  navigation, so no bespoke filter UI is built; it is presentation only and does
+  not fetch.
+- The picker fetches the owner's repository list once (paginated) and hands it to
+  the command palette, which filters client-side as the owner types. Server-side
+  search is deferred unless the list grows into the hundreds.
 - For each repository the app retains its full name (`owner/name`), which keys the
   snapshot and the linked-repository record. A repository renamed on GitHub must
   be re-linked.
@@ -147,10 +156,25 @@ refresh button to re-download its snapshot.
   works in the stock Node production image. The on-disk layout is used because
   retrieval needs a real directory tree to search; NuxtHub Blob is intentionally
   not used for snapshots (ADR 0002).
+- A snapshot also records, per extracted file, the date of the most recent commit
+  that touched that file on the default branch — its last-changed date. The
+  archive cannot supply this (GitHub tarballs stamp every file's mtime with the
+  archive-generation time, not the file's history), so it is fetched from the
+  GitHub API at snapshot time, in the same authenticated request that downloads
+  the archive. The dates are fetched in batch via the GitHub GraphQL API (one
+  query covering many paths via aliased `history(first: 1)` fields), falling back
+  to the REST commits API (`GET …/commits?path=<file>&per_page=1`) per path; the
+  authenticated rate limit comfortably covers a docs repo's markdown set. The
+  result is written as a small sidecar manifest in the snapshot directory (e.g.
+  `.data/repos/<id>/.dates.json`, relative path → ISO 8601 date). A manifest is
+  used rather than file mtimes because mtime preservation across the `.data`
+  volume and redeploys is not guaranteed, and rather than per-file DB rows because
+  the snapshot is the natural owner of per-file metadata. A file whose date cannot
+  be resolved falls back to the snapshot's commit date.
 - The initial snapshot is downloaded automatically when a repository is linked.
 - Refresh is owner-initiated and manual only: a refresh action re-downloads the
-  archive and replaces the snapshot, updating the last-refreshed timestamp. There
-  is no automatic refresh.
+  archive, re-fetches the per-file date manifest, and replaces the snapshot,
+  updating the last-refreshed timestamp. There is no automatic refresh.
 - Unlinking a repository deletes both its `linkedRepositories` record and its
   on-disk snapshot.
 
@@ -165,9 +189,12 @@ refresh button to re-download its snapshot.
   bundled with the app as a dependency (a prebuilt binary the tool spawns directly)
   rather than assumed on the host, so search runs in the stock Node production
   image, not only in dev. For each match the tool returns the repository identity,
-  the file path, the matched location, and the relevant piece of the file: the
-  whole file when it is under a size cap, otherwise a window of lines around the
-  match. Markdown-section-aware extraction is deferred (see Out of Scope).
+  the file path, the matched location, the file's last-changed date (read from the
+  snapshot's date manifest), and the relevant piece of the file: the whole file
+  when it is under a size cap, otherwise a window of lines around the match. The
+  date travels with every result so the model can reason about recency and answer
+  time-based questions; results may be ordered most-recent-first. Markdown-section-aware
+  extraction is deferred (see Out of Scope).
 - `buildTools()` in the core chat endpoint becomes per-request so the retrieval
   tool can close over the authenticated user id (to resolve that user's linked
   repositories) and the session GitHub token. This is a change from the current
@@ -178,8 +205,9 @@ refresh button to re-download its snapshot.
 - A new tool-render component is added under the chat tool components directory and
   wired into the message content dispatch by tool name, in the same pattern as the
   existing chart and weather tools. It renders the retrieved snippets with their
-  repository and file-path provenance, each linking to the source via a
-  commit-pinned GitHub URL built from the snapshot's recorded commit SHA.
+  repository and file-path provenance and last-changed date, each linking to the
+  source via a commit-pinned GitHub URL built from the snapshot's recorded commit
+  SHA.
 
 ## Testing Decisions
 
