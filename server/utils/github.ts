@@ -23,6 +23,9 @@ export interface AvailableRepo {
 // server-only `secure` field. Fail closed with a clear message when it is absent
 // (e.g. open mode with no GitHub login yet).
 export async function requireGithubToken(event: H3Event): Promise<string> {
+  // In fake mode no real connection exists; hand back a placeholder token so the
+  // guard passes and the link / refresh flow runs offline.
+  if (fakeExternalsEnabled()) return FAKE_GITHUB_TOKEN
   const session = await getUserSession(event)
   const token = session.secure?.githubToken
   if (token === undefined || token === "") {
@@ -100,6 +103,7 @@ const rawRepoSchema = z.object({
 // to `owner` affiliation so the list matches "my repos" and stays short; the
 // picker filters it client-side (PRD).
 export async function listOwnerRepos(token: string): Promise<AvailableRepo[]> {
+  if (fakeExternalsEnabled()) return fakeOwnerRepos()
   const repos: AvailableRepo[] = []
   const perPage = 100
   for (let page = 1; page <= 20; page++) {
@@ -131,6 +135,7 @@ export async function getRepoMeta(
   token: string,
   fullName: string,
 ): Promise<{ defaultBranch: string; commitSha: string; commitDate: string }> {
+  if (fakeExternalsEnabled()) return fakeRepoMeta()
   const { default_branch: defaultBranch } = await ghGet(
     token,
     `/repos/${fullName}`,
@@ -347,6 +352,7 @@ async function extractMarkdown(tarball: Buffer, destDir: string): Promise<string
 export async function downloadAndExtractSnapshot(
   input: SnapshotInput,
 ): Promise<{ fileCount: number; relPaths: string[] }> {
+  if (fakeExternalsEnabled()) return writeFakeSnapshot(input)
   const { token, fullName, ref, destDir } = input
   const response = await ghFetch(token, `/repos/${fullName}/tarball/${encodeURIComponent(ref)}`)
   const tarball = Buffer.from(await response.arrayBuffer())
@@ -363,4 +369,28 @@ export async function downloadAndExtractSnapshot(
 // Remove a snapshot directory from disk (unlink, or before a failed link rolls back).
 export async function deleteSnapshotDir(destDir: string): Promise<void> {
   await rm(destDir, { recursive: true, force: true })
+}
+
+// Fake-mode snapshot (step 2): write the fixture markdown tree and date manifest
+// to `destDir` instead of fetching + extracting a tarball, mirroring the real
+// download's replace-wholesale + per-file-date semantics. Every file's date is
+// the fixture commit date.
+async function writeFakeSnapshot(
+  input: SnapshotInput,
+): Promise<{ fileCount: number; relPaths: string[] }> {
+  const { destDir } = input
+  await rm(destDir, { recursive: true, force: true })
+  await mkdir(destDir, { recursive: true })
+
+  const relPaths: string[] = []
+  const dates: Record<string, string> = {}
+  for (const [rel, content] of Object.entries(FAKE_FIXTURE_FILES)) {
+    const target = join(destDir, rel)
+    await mkdir(dirname(target), { recursive: true })
+    await writeFile(target, content)
+    relPaths.push(rel)
+    dates[rel] = FAKE_COMMIT_DATE
+  }
+  await writeFile(join(destDir, DATES_MANIFEST), JSON.stringify(dates))
+  return { fileCount: relPaths.length, relPaths }
 }

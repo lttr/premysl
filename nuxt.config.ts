@@ -31,6 +31,15 @@ export default defineNuxtConfig({
     // the client. Bound to the unprefixed VOYAGE_API_KEY (as in .env.example),
     // matching the ANTHROPIC_API_KEY convention; NUXT_VOYAGE_API_KEY also wins.
     voyageApiKey: process.env.VOYAGE_API_KEY ?? "",
+    // Test-only seams (dev only — paired with import.meta.dev, so they fail
+    // closed in a production build). Server-only; never sent to the client.
+    // NUXT_ALLOW_TEST_LOGIN — enable GET /auth/test-login.
+    allowTestLogin: "",
+    // NUXT_TEST_GITHUB_TOKEN — optional PAT put on the test-login session.
+    testGithubToken: "",
+    // NUXT_FAKE_EXTERNALS — replace external systems with offline fakes and
+    // enable GET /test/seed-repo.
+    fakeExternals: "",
     public: {
       // NUXT_PUBLIC_REQUIRE_AUTH — on in prod, off in dev by default. Only this
       // boolean reaches the client (so middleware knows whether to redirect).

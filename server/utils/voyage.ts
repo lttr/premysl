@@ -74,12 +74,14 @@ async function contextualizedEmbeddings(
 // embedding per chunk, in input order.
 export async function embedDocumentChunks(chunks: string[]): Promise<number[][]> {
   if (chunks.length === 0) return []
+  if (fakeExternalsEnabled()) return chunks.map((c) => fakeEmbedding(c, EMBEDDING_DIMENSIONS))
   const [group] = await contextualizedEmbeddings([chunks], "document")
   return group ?? []
 }
 
 // Embed a single search query.
 export async function embedQuery(query: string): Promise<number[]> {
+  if (fakeExternalsEnabled()) return fakeEmbedding(query, EMBEDDING_DIMENSIONS)
   const [group] = await contextualizedEmbeddings([[query]], "query")
   const embedding = group?.[0]
   if (embedding === undefined) {
