@@ -28,6 +28,12 @@ Server gate: `requireRequestUser(event)` (`server/utils/auth.ts`) — call it in
 
 Custom tools in `shared/utils/tools/`, rendered by `app/components/chat/tool/`.
 
+## Offline dev / test mode
+
+- `NUXT_FAKE_EXTERNALS=1` (dev-only, fails closed in prod via `import.meta.dev`) is the single switch that replaces the LLM, GitHub, and Voyage boundaries with deterministic offline fakes (`server/utils/fake-externals.ts`, gated by `fakeExternalsEnabled()`). It also enables `GET /auth/test-login` and `GET /test/seed-repo`. No keys/PAT/network needed. Never wire any fake into the UI.
+- Read these flags by truthiness (`flagEnabled()`), never `=== "1"`: Nuxt parses runtime-config env overrides with `destr`, so `NUXT_*=1` arrives as the number `1`.
+- `vp dev`/`nuxt dev` read flags from `.env` only; inline `NUXT_*` on the command line does not reach the server. To run with flags without touching `.env`: `./node_modules/.bin/nuxt dev --dotenv <file>`. See `dev-server-env-injection` memory.
+
 ## Notes
 
 - Server imports NuxtHub virtual modules (`hub:db`); fallow/tsc can't resolve them — `nuxt build`/`typecheck` are the real check.

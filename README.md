@@ -81,6 +81,34 @@ Start the dev server on `http://localhost:5040`:
 vp dev
 ```
 
+### Offline dev mode
+
+For rapid local work and e2e / agent-browser runs, set a single flag to replace
+every behind-auth external system (the LLM provider, GitHub, and Voyage) with
+deterministic offline fakes — no API keys, no PAT, no network:
+
+```bash
+# in .env
+NUXT_FAKE_EXTERNALS=1
+```
+
+With it on (dev only; it fails closed in a production build via `import.meta.dev`):
+
+- **LLM** streams a canned reply, so chat works without a provider key.
+- **GitHub** serves a fixture repo list and writes a fixture markdown snapshot, so
+  the real link / refresh flow runs end to end offline.
+- **Voyage** returns deterministic hash-based embeddings, so RAG indexing and
+  retrieval are offline and stable.
+
+It also enables `GET /auth/test-login` (mint a session without GitHub OAuth,
+defaulting the handle to `tester`) and `GET /test/seed-repo` (seed the fixture
+repo directly). Typical flow: open `/auth/test-login`, then link
+`premysl-test/fixture-notes` from the repo picker, then chat.
+
+> Note: `vp dev` / `nuxt dev` read these flags from `.env`. Passing `NUXT_*`
+> inline on the command line does **not** reach the server — to run with flags
+> without editing `.env`, use `./node_modules/.bin/nuxt dev --dotenv <file>`.
+
 ## Verify
 
 The repo uses [Vite+](https://viteplus.dev) (`vp`) as the unified
