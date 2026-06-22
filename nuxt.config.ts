@@ -1,3 +1,22 @@
+import { createRequire } from "node:module"
+
+// @vscode/ripgrep ships its `rg` binary in a platform-specific optional
+// dependency (`@vscode/ripgrep-<platform>-<arch>`) resolved at runtime via a
+// computed `require.resolve`. Nitro's static dependency tracer cannot see that
+// dynamic resolve, so the binary is omitted from `.output/server/node_modules`
+// and the server crash-loops on boot ("Could not find @vscode/ripgrep-linux-x64").
+// Resolve the binary for the build platform and force it into the trace. Null on
+// platforms whose optional dep isn't installed (e.g. a macOS dev build), which
+// just leaves the trace untouched there.
+const ripgrepBinary = (() => {
+  const require = createRequire(import.meta.url)
+  try {
+    return require.resolve(`@vscode/ripgrep-${process.platform}-${process.arch}/bin/rg`)
+  } catch {
+    return null
+  }
+})()
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -60,6 +79,8 @@ export default defineNuxtConfig({
     experimental: {
       openAPI: true,
     },
+    // Force the ripgrep binary into the server trace (see `ripgrepBinary` above).
+    ...(ripgrepBinary !== null ? { externals: { traceInclude: [ripgrepBinary] } } : {}),
   },
 
   hub: {
